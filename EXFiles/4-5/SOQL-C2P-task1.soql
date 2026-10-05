@@ -1,0 +1,1 @@
+SELECT Name, Account.Name FROM Contact

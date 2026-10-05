@@ -1,0 +1,13 @@
+{
+    "codeBuilder.showWelcomePage": false,
+    "explorer.compactFolders": false,
+    "workbench.editor.enablePreview": false,
+    "editor.minimap.enabled": false,
+    "editor.mouseWheelZoom": true,
+    "files.autoSave": "off",
+    "salesforcedx-vscode-core.retrieve-test-code-coverage": true,
+    "salesforcedx-vscode-core.push-or-deploy-on-save.enabled": true,
+    "salesforcedx-vscode-core.enable-sobject-refresh-on-startup": false,
+    "xml.preferences.showSchemaDocumentationType": "none",
+    "salesforcedx-vscode-apex-testing.restore-previous-results": false
+}

@@ -1,0 +1,2 @@
+SELECT Name,(SELECT Name FROM Courses__r) FROM Certification__c
+WHERE Id IN (SELECT Certification__c from Course__c )

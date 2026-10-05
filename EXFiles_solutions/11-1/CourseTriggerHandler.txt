@@ -1,0 +1,51 @@
+public with sharing class CourseTriggerHandler {
+
+    static final String RETIRED = 'Retired';
+    static final String ENROLLED = 'Enrolled';
+    static final String SCHEDULED = 'Scheduled';
+    static final String CANCELLED = 'Cancelled';
+    static final String COURSE_ERROR_MESSAGE = 'Course has enrolled students'; // Optionally replace text with a custom label
+
+    public static void checkStatus(List<Course__c> triggerNew, Map<Id, Course__c> oldMap, Map<Id, Course__c> newMap) {
+
+        /**
+        *  If a Course Status is changed to retired, then we need to check to see if there are any Course Delivery records marked
+        *  as Scheduled. If there is at least one attendee marked as Enrolled, then the change to retired should not happen
+        *  and an error message passed back
+        */
+
+        // TODO #1: Declare and initialize a variable whose type is a Set of type Id named courseIds.
+        Set<Id> courseIds = new Set<Id>();
+
+        // Loop through all Course Delivery records to look for attendees
+        for (Course__c course : triggerNew) {
+            if (oldMap.get(course.Id).Status__c != RETIRED && course.Status__c == RETIRED) {
+
+                // TODO #2: Add the Id field of the course to the courseIds set
+                courseIds.add(course.Id);
+            }
+        }
+
+        // TODO #4: Write an if statement that checks that the size of the set named courseIds is greater than 0. 
+        //          Paste the for loop code you copied from above into the body of the if statement.
+        //          Modify the WHERE clause on the Course_Delivery__c sObject to check that parent Course__c record 
+        //          is IN the Set of courseIds and the Status is 'Scheduled'.
+        //          
+        //          Since we have added the Status is 'Scheduled' filter in the query remove the now un-necessary 
+        //          Status check from the subsequent If statement
+        if (courseIds.size() > 0) {
+            for (Course_Delivery__c cd : [SELECT Id, Course__c, Status__c, (SELECT Status__c FROM Course_Attendees__r WHERE Status__c = :ENROLLED)
+                                          FROM Course_Delivery__c
+                                          WHERE Course__c IN :courseIds AND Status__c = :SCHEDULED]) {
+                if (cd.Course_Attendees__r != null && cd.Course_Attendees__r.size() > 0) {
+                    newMap.get(cd.Course__c).addError(COURSE_ERROR_MESSAGE);
+                } else {
+
+                    // Change the status of the Course Delivery record to 'Cancelled'
+                    cd.Status__c = CANCELLED;
+                    update cd;
+                }
+            }
+        }
+    }
+}
