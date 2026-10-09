@@ -1,0 +1,16 @@
+<template>
+    <div class="row">
+        <h2 class="header">Basic Input Number</h2>
+        <lightning-input 
+        type="number" 
+        name="inputnumber"
+        label="Enter a max record numbers"
+        value={maxRecords} 
+        onchange={handleInputChange}></lightning-input>
+    </div>
+    <template for:each={accounts} for:item="acc">
+        <div key={acc.Id}>
+            {acc.Name}
+        </div>
+    </template>
+</template>
