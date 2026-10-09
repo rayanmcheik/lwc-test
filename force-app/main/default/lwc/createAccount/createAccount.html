@@ -1,0 +1,40 @@
+<template>
+    <lightning-card title="Create Account" icon-name="standard:account">
+        <div class="slds-p-around_medium">
+            <lightning-input
+                label="Account Name"
+                value={accountName}
+                onchange={handleChange}
+                required>
+            </lightning-input>
+
+            <div class="slds-m-top_medium">
+                <lightning-button
+                    label="Create Account"
+                    variant="brand"
+                    onclick={handleClick}
+                    disabled={isLoading}>
+                </lightning-button>
+            </div>
+
+            <template lwc:if={errorMessage}>
+                <p class="slds-text-color_error slds-m-top_small">
+                    {errorMessage}
+                </p>
+            </template>
+        </div>
+
+        <div class="slds-p-around_medium">
+          
+
+            <template lwc:if={accounts.data}>
+                <lightning-datatable
+                    key-field="Id"
+                    data={accounts.data}
+                    columns={columns}
+                    hide-checkbox-column>
+                </lightning-datatable>
+            </template>
+        </div>
+    </lightning-card>
+</template>
