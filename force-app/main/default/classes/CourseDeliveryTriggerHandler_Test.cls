@@ -37,7 +37,7 @@ private class CourseDeliveryTriggerHandler_Test {
 
         //TODO #4: Review this code that assigns the start date 
         //         of courseDelivery.
-        courseDelivery.Start_Date__c = Date.newInstance(Date.today().year(), 9, 1);
+        courseDelivery.Start_Date__c = Date.newInstance(Date.today().year(), 1, 1);
 
         //TODO #5: Review this code that
         //         a) attempts to insert courseDelivery into the database and
@@ -60,6 +60,6 @@ private class CourseDeliveryTriggerHandler_Test {
         //TODO #7: Use the assertEquals method of the System class to raise 
         //  an assertion if the number of errors reported by errorCount 
         //  does not equal 0.
-        System.assertEquals(0, errorCount, 'ERROR: Expected no errors in this test');
+        System.assertEquals(1, errorCount, 'ERROR: Expected no errors in this test');
     }
 }

@@ -21,5 +21,9 @@
 		<members>Error_Log__c</members>
 		<name>CustomObject</name>
 	</types>
+	<types>
+		<members>Sales_Home</members>
+		<name>FlexiPage</name>
+	</types>	
 	<version>59.0</version>
 </Package>

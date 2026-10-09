@@ -1,0 +1,13 @@
+<template>
+    <div class="slds-box slds-theme_shade slds-var-m-bottom_medium">
+        <h3 class="slds-text-heading_small slds-var-m-bottom_small">
+            Child Instance: <strong>{childName}</strong>
+        </h3>
+        
+        <lightning-button 
+            label={buttonLabel} 
+            variant={buttonVariant} 
+            onclick={notifyParent}>
+        </lightning-button>
+    </div>
+</template>

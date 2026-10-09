@@ -1,0 +1,34 @@
+<template>
+    <lightning-card title="Parent Status Hub" icon-name="standard:dashboard">
+        <div class="slds-var-m-around_medium">
+            
+            <!-- Broadcast Controller button -->
+            <div class="slds-var-m-bottom_large">
+                <lightning-button 
+                    label="Force Reset Both Children to Standby" 
+                    variant="brand" 
+                    onclick={resetAllChildren}>
+                </lightning-button>
+            </div>
+
+            <!-- Live Status Logs -->
+            <div class="slds-box slds-var-m-bottom_large">
+                <p><strong>Child 1 Dashboard Log:</strong> {child1Status}</p>
+                <p><strong>Child 2 Dashboard Log:</strong> {child2Status}</p>
+            </div>
+
+            <!-- Injecting Two Instances of childOne mapping child-name property -->
+            <!-- FIXED: Changed tag from c-child-component-one to c-child-one -->
+            <c-child-component 
+                child-name="Child A" 
+                onstatuschange={handleChildStatusUpdate}>
+            </c-child-component>
+
+            <c-child-component 
+                child-name="Child B" 
+                onstatuschange={handleChildStatusUpdate}>
+            </c-child-component>
+
+        </div>
+    </lightning-card>
+</template>

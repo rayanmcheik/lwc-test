@@ -100,10 +100,3 @@ public static void addCompetitorToOpportunity(List<Competitor__c> newList, Map<I
         
     }
 }
-        
-        
-        
-        
-        
-        
- 
