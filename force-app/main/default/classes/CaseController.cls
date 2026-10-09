@@ -22,7 +22,6 @@ public with sharing class CaseController {
             LIMIT 500
         ];
     }
-
     @AuraEnabled
     public static Id createCase(String subject, String description) {
 
