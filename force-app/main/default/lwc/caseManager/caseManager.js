@@ -110,10 +110,11 @@ export default class CaseManager extends LightningElement {
     }
      get statusOptions() {
         return [
-            { label: 'All Statuses', value: '' },
+            { label: 'All Status', value: '' },
             { label: 'New', value: 'New' },
             { label: 'Working', value: 'Working' },
-            { label: 'Escalated', value: 'Escalated' }
+            { label: 'Escalated', value: 'Escalated' },
+            { label: 'None', value: 'None' }
         ];
     }
 
