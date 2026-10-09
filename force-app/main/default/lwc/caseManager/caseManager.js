@@ -1,8 +1,6 @@
 import { LightningElement, wire } from 'lwc';
-
 import getCases from '@salesforce/apex/CaseController.getCases';
 import createCase from '@salesforce/apex/CaseController.createCase';
-
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
@@ -81,7 +79,6 @@ export default class CaseManager extends LightningElement {
     async handleShowAll() {
         this.searchInput = '';
         this.searchKey = '';
-
         this.isLoading = true;
 
         try {
@@ -96,7 +93,6 @@ export default class CaseManager extends LightningElement {
             this.isLoading = false;
         }
     }
-
     handleSubjectChange(event) {
         this.subject = event.target.value;
     }

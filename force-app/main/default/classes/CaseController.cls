@@ -30,7 +30,6 @@ public with sharing class CaseController {
                 'Case subject is required.'
             );
         }
-
         Case newCase = new Case(
             Subject = subject.trim(),
             Description = description,
