@@ -1,41 +1,53 @@
 <template>
     <lightning-card title="Case Manager" icon-name="standard:case">
-
         <div class="slds-p-around_medium">
 
-            <div class="slds-grid slds-gutters slds-m-bottom_medium">
-                <div class="slds-col">
-                    <lightning-input
-                        label="Search by Case Number"
-                        type="search"
-                        value={searchInput}
-                        onchange={handleSearchInput}
-                        placeholder="Enter case number">
-                    </lightning-input>
-                </div>
+            <div class="search-container slds-m-bottom_large">
+                <lightning-input
+                    label="Search by Case Number"
+                    type="search"
+                    value={searchKey}
+                    onchange={handleSearch}
+                    placeholder="Enter case number">
+                </lightning-input>
 
-                <div class="slds-col slds-align-bottom">
-                    <lightning-button
-                        label="Search"
-                        variant="brand"
-                        onclick={handleSearch}>
-                    </lightning-button>
-
-                    <lightning-button
-                        label="Show All"
-                        class="slds-m-left_small"
-                        onclick={handleShowAll}>
-                    </lightning-button>
-                </div>
+                <template if:true={searchKey}>
+                    <lightning-datatable
+                        class="slds-m-top_medium"
+                        key-field="Id"
+                        data={cases}
+                        columns={columns}
+                        hide-checkbox-column>
+                    </lightning-datatable>
+                </template>
+            </div>
+            
+            <div class="search-container slds-m-bottom_medium">
+                <lightning-combobox
+                    name="statusDropdown"
+                    label="Search by Case Status"
+                    value={searchKeyStatus}
+                    placeholder="Select Case Status"
+                    options={statusOptions}
+                    onchange={handleSearchbyStatus}>
+                </lightning-combobox>
+          
+                <lightning-datatable
+                    class="slds-m-top_medium"
+                    key-field="Id"
+                    data={displayedCases}
+                    columns={columns}
+                    hide-checkbox-column>
+                </lightning-datatable>
             </div>
 
-            <div class="slds-box slds-m-bottom_large">
-
+            <div class="slds-box slds-m-top_large">
                 <h2 class="slds-text-heading_medium slds-m-bottom_medium">
                     Create New Case
                 </h2>
 
                 <lightning-input
+                    data-id="subject"
                     label="Subject"
                     value={subject}
                     onchange={handleSubjectChange}
@@ -56,21 +68,8 @@
                     onclick={handleCreateCase}
                     disabled={isCreating}>
                 </lightning-button>
-
             </div>
-            <h2 class="slds-text-heading_medium slds-m-bottom_small">
-                Cases
-            </h2>
-
-            <lightning-datatable
-                key-field="Id"
-                data={cases}
-                columns={columns}
-                is-loading={isLoading}
-                hide-checkbox-column>
-            </lightning-datatable>
 
         </div>
-
     </lightning-card>
 </template>

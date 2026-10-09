@@ -22,6 +22,17 @@ public with sharing class CaseController {
             LIMIT 500
         ];
     }
+
+    @AuraEnabled(cacheable=true)
+    public static List<Case> getAllCasesByStatus() {
+        return [
+            SELECT Id, CaseNumber, Subject, Description, Status
+            FROM Case
+            ORDER BY CreatedDate DESC
+            LIMIT 500
+        ];
+    }
+
     @AuraEnabled
     public static Id createCase(String subject, String description) {
 
@@ -30,6 +41,7 @@ public with sharing class CaseController {
                 'Case subject is required.'
             );
         }
+
         Case newCase = new Case(
             Subject = subject.trim(),
             Description = description,
