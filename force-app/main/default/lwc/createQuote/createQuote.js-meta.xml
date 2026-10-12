@@ -2,11 +2,11 @@
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>Create Quote</masterLabel>
-    <targets>
+ <targets>
         <target>lightning__RecordPage</target>
+        <target>lightning__RecordAction</target>
     </targets>
-    <targetConfigs>
+   <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
             <objects>
                 <object>Opportunity</object>
