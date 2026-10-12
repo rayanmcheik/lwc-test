@@ -1,0 +1,123 @@
+<template>
+    <lightning-card title="Create Quote" icon-name="standard:quotes">
+        <div class="slds-p-around_medium">
+            <template lwc:if={loading}>
+                <lightning-spinner
+                    alternative-text="Loading"
+                    size="medium">
+                </lightning-spinner>
+            </template>
+            <template lwc:elseif={loadError}>
+                <div class="slds-text-color_error">
+                    {loadError}
+                </div>
+            </template>
+            <template lwc:else>
+                <p class="slds-m-bottom_medium">
+                    <strong>Lease Type:</strong> {leaseType}
+                </p>
+                <form onsubmit={handleSubmit}>
+                    <template lwc:if={isOfficeOrRetail}>
+                        <lightning-input
+                            label="Proposed Start Date"
+                            name="startDate"
+                            type="date"
+                            value={startDate}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                        <lightning-input
+                            label="Proposed End Date"
+                            name="endDate"
+                            type="date"
+                            value={endDate}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                        <lightning-input
+                            label="Payment Terms"
+                            name="paymentTerms"
+                            type="number"
+                            step="1"
+                            value={paymentTerms}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                        <lightning-input
+                            label="Grace Period (Months)"
+                            name="gracePeriod"
+                            type="number"
+                            step="1"
+                            value={gracePeriod}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                    </template>
+                    <template lwc:if={isRetail}>
+                        <lightning-combobox
+                            label="Retail Sales Category"
+                            name="retailCategory"
+                            value={retailCategory}
+                            options={retailOptions}
+                            onchange={handleChange}
+                            required>
+                        </lightning-combobox>
+                    </template>
+                    <template lwc:if={isLand}>
+                        <lightning-input
+                            label="Proposed Start Date"
+                            name="startDate"
+                            type="date"
+                            value={startDate}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                        <lightning-input
+                            label="Proposed Duration"
+                            name="duration"
+                            type="number"
+                            step="1"
+                            min="30"
+                            value={duration}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                        <lightning-input
+                            label="Proposed End Date"
+                            type="date"
+                            value={endDate}
+                            readonly>
+                        </lightning-input>
+                        <lightning-input
+                            label="Rent Review Frequency (Years)"
+                            name="rentReviewFrequency"
+                            type="number"
+                            step="1"
+                            value={rentReviewFrequency}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                        <lightning-input
+                            label="Payment Terms"
+                            name="paymentTerms"
+                            type="number"
+                            step="1"
+                            value={paymentTerms}
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+                    </template>
+                    <div class="slds-m-top_large">
+                        <lightning-button
+                            label="Create Quote"
+                            type="submit"
+                            variant="brand"
+                            disabled={saving}>
+                        </lightning-button>
+                    </div>
+
+                </form>
+            </template>
+        </div>
+    </lightning-card>
+</template>

@@ -1,39 +1,54 @@
 <template>
-    <lightning-button
-        label="Show Related Contacts"
-        variant="brand"
-        onclick={openPopup}>
-    </lightning-button>
-    <template lwc:if={showPopup}>
-        <section>
-            <div>
-                <header>
-                    <h2>
-                        Related Contacts
-                    </h2>
-                    <lightning-button-icon
-                        icon-name="utility:close"
-                        alternative-text="Close"
-                        onclick={closePopup}>
-                    </lightning-button-icon>
-                </header>
-                <div>
-                    <lightning-datatable
-                        key-field="Id"
-                        data={contacts}
-                        columns={columns}
-                        hide-checkbox-column>
-                    </lightning-datatable>
+    <p style="font-weight: bold; margin-bottom: 1rem;">
+        Related Contacts
+    </p>
+
+    <template lwc:if={contacts.length}>
+        <div style="display: flex; flex-wrap: wrap; margin: -0.5rem;">
+            <template for:each={contacts} for:item="contact">
+                <div
+                    key={contact.Id}
+                    style="padding: 0.5rem; box-sizing: border-box;">
+
+                    <lightning-card
+                        title={contact.FirstName}
+                        icon-name="standard:contact">
+
+                        <div style=" color: #1e3a8a; padding: 1rem;">
+                            <p style="margin-bottom: 0.5rem;">
+                                <strong>Name:</strong>
+                                {contact.FirstName} {contact.LastName}
+                            </p>
+
+                            <p style="margin-bottom: 0.5rem;">
+                                <strong>Email:</strong>
+                                {contact.Email}
+                            </p>
+
+                            <p style="margin-bottom: 0.5rem;">
+                                <strong>Phone:</strong>
+                                {contact.Phone}
+                            </p>
+
+                            <p style="margin-bottom: 1rem;">
+                                <strong>Title:</strong>
+                                {contact.Title}
+                            </p>
+
+                            <lightning-button
+                                label="Delete"
+                                variant="destructive"
+                                data-id={contact.Id}
+                                onclick={deleteContact}>
+                            </lightning-button>
+                        </div>
+                    </lightning-card>
                 </div>
-                <footer>
-                    <lightning-button
-                        label="Close"
-                        onclick={closePopup}>
-                    </lightning-button>
-                </footer>
-            </div>
-        </section>
-        <div>
+            </template>
         </div>
+    </template>
+
+    <template lwc:else>
+        <p>No related contacts found.</p>
     </template>
 </template>

@@ -6,10 +6,10 @@
         <target>lightning__RecordPage</target>
         <target>lightning__RecordAction</target>
     </targets>
-    <targetConfigs>
+   <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
             <objects>
-                <object>Opportunity</object>
+                <object>Account</object>
             </objects>
         </targetConfig>
     </targetConfigs>
