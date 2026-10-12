@@ -1,0 +1,182 @@
+<template>
+    <lightning-card
+        title="Account Opportunity Overview"
+        icon-name="standard:account">
+
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <p class="slds-m-bottom_medium">
+                Accounts and their related opportunities
+            </p>
+
+            <template lwc:if={error}>
+                <div class="slds-text-color_error slds-p-around_small">
+                    Unable to load Accounts. Please check your access
+                    and try again.
+                </div>
+            </template>
+
+            <template lwc:if={isLoading}>
+                <lightning-spinner
+                    alternative-text="Loading Accounts"
+                    size="medium">
+                </lightning-spinner>
+            </template>
+
+            <template lwc:if={hasAccounts}>
+                <lightning-accordion allow-multiple-sections-open>
+                    <template for:each={accounts} for:item="account">
+                        <lightning-accordion-section
+                            key={account.accountId}
+                            name={account.accountId}
+                            label={account.accountName}>
+
+                            <div class="account-summary slds-m-bottom_medium">
+                                <p>
+                                    <strong>Opportunity Count:</strong>
+                                    {account.opportunityCount}
+                                </p>
+
+                                <p>
+                                    <strong>Total Amount:</strong>
+                                    <lightning-formatted-number
+                                        value={account.totalAmount}
+                                        format-style="currency"
+                                        currency-code="USD">
+                                    </lightning-formatted-number>
+                                </p>
+                            </div>
+
+                            <template lwc:if={account.hasOpportunities}>
+                                <div class="slds-scrollable_x">
+                                    <table
+                                        class="slds-table slds-table_cell-buffer
+                                               slds-table_bordered">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">
+                                                    <div>Opportunity Name</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div>Stage</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div>Amount</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div>Action</div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <template
+                                                for:each={account.opportunities}
+                                                for:item="opp">
+                                                <tr key={opp.opportunityId}>
+                                                    <td>
+                                                        {opp.opportunityName}
+                                                    </td>
+                                                    <td>{opp.stageName}</td>
+                                                    <td>
+                                                        <lightning-formatted-number
+                                                            value={opp.amount}
+                                                            format-style="currency"
+                                                            currency-code="USD">
+                                                        </lightning-formatted-number>
+                                                    </td>
+                                                    <td>
+                                                        <template
+                                                            lwc:if={opp.canClose}>
+                                                            <lightning-button
+                                                                label="Mark as Closed"
+                                                                variant="brand"
+                                                                data-id={opp.opportunityId}
+                                                                onclick={handleOpenModal}>
+                                                            </lightning-button>
+                                                        </template>
+
+                                                        <template
+                                                            lwc:else>
+                                                            <span class="slds-text-color_success">
+                                                                Closed
+                                                            </span>
+                                                        </template>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </template>
+
+                            <template lwc:else>
+                                <div class="empty-message slds-p-around_medium">
+                                    This Account has no Opportunities.
+                                </div>
+                            </template>
+
+                        </lightning-accordion-section>
+                    </template>
+                </lightning-accordion>
+            </template>
+
+            <template lwc:if={showNoAccounts}>
+                <p class="slds-p-around_medium">
+                    No Accounts found.
+                </p>
+            </template>
+        </div>
+    </lightning-card>
+
+    <template lwc:if={showModal}>
+        <section
+            role="dialog"
+            tabindex="-1"
+            aria-modal="true"
+            aria-labelledby="modal-heading"
+            class="slds-modal slds-fade-in-open">
+
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2
+                        id="modal-heading"
+                        class="slds-text-heading_medium">
+                        Close Opportunity
+                    </h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p class="slds-m-bottom_medium">
+                        Select the final stage for this Opportunity.
+                    </p>
+
+                    <lightning-radio-group
+                        label="New Stage"
+                        options={stageOptions}
+                        value={selectedStage}
+                        onchange={handleStageChange}
+                        type="radio"
+                        required>
+                    </lightning-radio-group>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCancel}
+                        class="slds-m-right_small">
+                    </lightning-button>
+
+                    <lightning-button
+                        label="Update"
+                        variant="brand"
+                        onclick={handleUpdate}
+                        disabled={isUpdating}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>
