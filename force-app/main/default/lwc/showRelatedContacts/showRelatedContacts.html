@@ -1,0 +1,39 @@
+<template>
+    <lightning-button
+        label="Show Related Contacts"
+        variant="brand"
+        onclick={openPopup}>
+    </lightning-button>
+    <template lwc:if={showPopup}>
+        <section>
+            <div class="slds-modal__container">
+                <header>
+                    <h2>
+                        Related Contacts
+                    </h2>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        onclick={closePopup}>
+                    </lightning-button-icon>
+                </header>
+                <div>
+                    <lightning-datatable
+                        key-field="Id"
+                        data={contacts}
+                        columns={columns}
+                        hide-checkbox-column>
+                    </lightning-datatable>
+                </div>
+                <footer>
+                    <lightning-button
+                        label="Close"
+                        onclick={closePopup}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div>
+        </div>
+    </template>
+</template>

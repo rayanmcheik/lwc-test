@@ -1,0 +1,17 @@
+<template>
+    <lightning-button label="Get Related Contacts" onclick={openRelatedContacts}></lightning-button>
+    <template lwc:if={showContacts}>
+        <section>
+            <div>
+                <header>
+                    <lightning-button-icon icon-name="utility:close" alternative-text="Close" onclick={closeRelatedContacts}>
+
+                    </lightning-button-icon>
+                <h2>Related Contacts</h2>
+                </header>
+
+                <div><lightning-button></lightning-button></div>
+            </div>
+        </section>
+    </template>
+</template>
