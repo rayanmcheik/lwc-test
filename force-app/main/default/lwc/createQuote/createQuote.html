@@ -1,129 +1,101 @@
 <template>
-
     <lightning-quick-action-panel header="Create Quote">
-
         <div class="slds-p-around_small">
-
             <p class="slds-m-bottom_medium">
                 Lease Type: <strong>{leaseType}</strong>
             </p>
-
-
-            <!-- OFFICE -->
             <template if:true={isOffice}>
-
                 <lightning-input
                     type="date"
                     label="Proposed Start Date"
                     name="Proposed_Start_Date__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="date"
                     label="Proposed End Date"
                     name="Proposed_End_Date__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="number"
                     label="Payment Terms"
                     name="Payment_Terms__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="number"
                     label="Grace Period (Months)"
                     name="Grace_Period__c"
                     onchange={handleChange}>
                 </lightning-input>
-
             </template>
-
-
-            <!-- RETAIL -->
             <template if:true={isRetail}>
-
                 <lightning-input
                     type="date"
                     label="Proposed Start Date"
                     name="Proposed_Start_Date__c"
-                    onchange={handleChange}>
+                    onchange={handleChange}
+                    required
+                    >
                 </lightning-input>
-
                 <lightning-input
                     type="date"
                     label="Proposed End Date"
                     name="Proposed_End_Date__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="number"
                     label="Payment Terms"
                     name="Payment_Terms__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="number"
                     label="Grace Period (Months)"
                     name="Grace_Period__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-combobox
                     label="Retail Sales Category"
                     name="Retail_Sales_Category__c"
                     options={retailOptions}
                     onchange={handleChange}>
                 </lightning-combobox>
-
             </template>
-
-
-            <!-- LAND -->
             <template if:true={isLand}>
-
                 <lightning-input
                     type="date"
                     label="Proposed Start Date"
                     name="Proposed_Start_Date__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="number"
-                    label="Proposed Lease Duration"
-                    name="Proposed_Lease_Duration__c"
+                    label="Proposed  Duration"
+                    name="Proposed_Duration__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="date"
                     label="Proposed End Date"
                     value={quoteRecord.Proposed_End_Date__c}
                     readonly>
                 </lightning-input>
-
                 <lightning-input
                     type="number"
                     label="Rent Review Frequency"
                     name="Rent_Review_Frequency__c"
                     onchange={handleChange}>
                 </lightning-input>
-
                 <lightning-input
                     type="number"
                     label="Payment Terms"
                     name="Payment_Terms__c"
                     onchange={handleChange}>
                 </lightning-input>
-
             </template>
-
         </div>
 
 

@@ -1,0 +1,119 @@
+<template>
+    <div class="slds-card slds-p-around_medium">
+
+        <lightning-input
+            type="search"
+            label="Search Campaigns"
+            placeholder="Campaign name..."
+            value={searchName}
+            onchange={handleSearchNameChange}>
+        </lightning-input>
+
+        <lightning-combobox
+            class="slds-m-top_small"
+            label="Campaign Type"
+            value={selectedType}
+            options={typeOptions}
+            onchange={handleTypeChange}>
+        </lightning-combobox>
+
+        <div class="slds-grid slds-gutters slds-m-top_small">
+
+            <div class="slds-col">
+                <lightning-input
+                    type="date"
+                    label="From Date"
+                    value={fromDate}
+                    onchange={handleFromDateChange}>
+                </lightning-input>
+            </div>
+
+            <div class="slds-col">
+                <lightning-input
+                    type="date"
+                    label="To Date"
+                    value={toDate}
+                    onchange={handleToDateChange}>
+                </lightning-input>
+            </div>
+
+        </div>
+
+        <hr class="slds-m-vertical_medium"/>
+
+        <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+            <strong>Available Campaigns</strong>
+            <span>{filteredCampaigns.length} results</span>
+        </div>
+
+        <template for:each={filteredCampaigns} for:item="camp">
+
+            <div
+                key={camp.Id}
+                class="slds-box slds-m-bottom_small">
+
+                <div class="slds-grid slds-grid_vertical-align-center">
+
+                    <div class="slds-col slds-grow-none slds-m-right_small">
+
+                        <lightning-input
+                            type="checkbox"
+                            variant="label-hidden"
+                            data-id={camp.Id}
+                            checked={camp.isSelected}
+                            disabled={camp.isEnrolled}
+                            onchange={handleCheckboxChange}>
+                        </lightning-input>
+
+                    </div>
+
+                    <div class="slds-col">
+
+                        <div class="slds-grid slds-grid_align-spread">
+
+                            <strong>{camp.Name}</strong>
+
+                            <span>
+                                {camp.Status}
+                            </span>
+
+                        </div>
+
+                        <div class="slds-text-body_small slds-text-color_weak">
+
+                            {camp.Type}
+                            &bull;
+                            {camp.StartDate}
+                            to
+                            {camp.EndDate}
+
+                        </div>
+
+                        <template if:true={camp.isEnrolled}>
+
+                            <div class="slds-text-color_success slds-text-body_small slds-m-top_xx-small">
+
+                                Already enrolled
+
+                            </div>
+
+                        </template>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </template>
+
+        <div class="slds-m-top_medium">
+
+            <strong>
+                {selectedCount} new Campaign(s) selected
+            </strong>
+
+        </div>
+
+    </div>
+</template>

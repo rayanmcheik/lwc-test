@@ -58,11 +58,10 @@ export default class CreateQuote extends LightningElement {
         const field = event.target.name;
         let value = event.detail?.value ?? event.target.value;
 
-        // Convert number fields to numbers
         if (
             field === 'Payment_Terms__c' ||
             field === 'Grace_Period__c' ||
-            field === 'Proposed_Lease_Duration__c' ||
+            field === 'Proposed_Duration__c' ||
             field === 'Rent_Review_Frequency__c'
         ) {
             value = value ? Number(value) : null;
@@ -77,19 +76,18 @@ export default class CreateQuote extends LightningElement {
             this.isLand &&
             (
                 field === 'Proposed_Start_Date__c' ||
-                field === 'Proposed_Lease_Duration__c'
+                field === 'Proposed_Duration__c'
             )
         ) {
             this.calculateEndDate();
         }
     }
-
     calculateEndDate() {
         const startDate =
             this.quoteRecord.Proposed_Start_Date__c;
 
         const duration =
-            this.quoteRecord.Proposed_Lease_Duration__c;
+            this.quoteRecord.Proposed_Duration__c;
 
         if (startDate && duration) {
             const endDate = new Date(startDate + 'T00:00:00');
@@ -101,7 +99,6 @@ export default class CreateQuote extends LightningElement {
             };
         }
     }
-
     handleSave() {
         createQuote({
             opportunityId: this.recordId,

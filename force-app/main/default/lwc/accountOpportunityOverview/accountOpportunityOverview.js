@@ -64,7 +64,7 @@ export default class AccountOpportunityOverview extends LightningElement {
             this.accounts.length === 0;
     }
 
-    handleOpenModal(event) {
+    handleOpen(event) {
         this.selectedOpportunityId = event.currentTarget.dataset.id;
         this.selectedStage = 'Closed Won';
         this.showModal = true;
