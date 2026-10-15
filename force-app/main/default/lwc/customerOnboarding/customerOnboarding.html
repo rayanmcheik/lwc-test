@@ -1,0 +1,463 @@
+<template>
+
+    <lightning-card title="Customer Onboarding">
+
+        <div class="slds-p-around_medium">
+
+            <template lwc:if={isLoading}>
+
+                <lightning-spinner
+
+                    alternative-text="Loading"
+
+                    size="medium">
+
+                </lightning-spinner>
+
+            </template>
+
+            <lightning-progress-indicator
+
+                current-step={currentStep}
+
+                type="path"
+
+                variant="base">
+
+                <lightning-progress-step
+
+                    label="Company Information"
+
+                    value="1">
+
+                </lightning-progress-step>
+
+                <lightning-progress-step
+
+                    label="Members"
+
+                    value="2">
+
+                </lightning-progress-step>
+
+                <lightning-progress-step
+
+                    label="Shipping Information"
+
+                    value="3">
+
+                </lightning-progress-step>
+
+                <lightning-progress-step
+
+                    label="Documents"
+
+                    value="4">
+
+                </lightning-progress-step>
+
+            </lightning-progress-indicator>
+
+            <!-- STEP 1: COMPANY INFORMATION -->
+
+            <template lwc:if={isStep1}>
+
+                <div class="slds-m-top_large">
+
+                    <lightning-combobox
+
+                        label="Rating"
+
+                        name="Rating"
+
+                        value={accountData.Rating}
+
+                        options={ratingOptions}
+
+                        onchange={handleAccountChange}>
+
+                    </lightning-combobox>
+
+                    <lightning-combobox
+
+                        label="Account Type"
+
+                        name="Type"
+
+                        value={accountData.Type}
+
+                        options={typeOptions}
+
+                        onchange={handleAccountChange}>
+
+                    </lightning-combobox>
+
+                    <lightning-input
+
+                        label="Company Website"
+
+                        name="Website"
+
+                        type="url"
+
+                        value={accountData.Website}
+
+                        onchange={handleAccountChange}>
+
+                    </lightning-input>
+
+                    <lightning-input
+
+                        label="Annual Revenue"
+
+                        name="AnnualRevenue"
+
+                        type="number"
+
+                        formatter="currency"
+
+                        step="0.01"
+
+                        value={accountData.AnnualRevenue}
+
+                        onchange={handleAccountChange}>
+
+                    </lightning-input>
+
+                    <lightning-textarea
+
+                        label="Description"
+
+                        name="Description"
+
+                        value={accountData.Description}
+
+                        onchange={handleAccountChange}>
+
+                    </lightning-textarea>
+
+                    <div class="slds-m-top_medium slds-text-align_right">
+
+                        <lightning-button
+
+                            label="Next"
+
+                            variant="brand"
+
+                            onclick={handleNext}>
+
+                        </lightning-button>
+
+                    </div>
+
+                </div>
+
+            </template>
+
+            <!-- STEP 2: MEMBERS -->
+
+            <template lwc:if={isStep2}>
+
+                <div class="slds-m-top_large">
+
+                    <h2 class="slds-text-heading_medium slds-m-bottom_medium">
+
+                        Primary Contact
+
+                    </h2>
+
+                    <lightning-input
+
+                        label="First Name"
+
+                        name="FirstName"
+
+                        value={contactData.FirstName}
+
+                        onchange={handleContactChange}>
+
+                    </lightning-input>
+
+                    <lightning-input
+
+                        label="Last Name"
+
+                        name="LastName"
+
+                        value={contactData.LastName}
+
+                        onchange={handleContactChange}
+
+                        required>
+
+                    </lightning-input>
+
+                    <lightning-input
+
+                        label="Email"
+
+                        name="Email"
+
+                        type="email"
+
+                        value={contactData.Email}
+
+                        onchange={handleContactChange}
+
+                        required>
+
+                    </lightning-input>
+
+                    <lightning-input
+
+                        label="Phone"
+
+                        name="Phone"
+
+                        type="tel"
+
+                        value={contactData.Phone}
+
+                        onchange={handleContactChange}>
+
+                    </lightning-input>
+
+                    <lightning-combobox
+
+                        label="Role"
+
+                        name="Role__c"
+
+                        value={contactData.Role__c}
+
+                        options={roleOptions}
+
+                        onchange={handleContactChange}>
+
+                    </lightning-combobox>
+
+                    <div class="slds-m-top_medium slds-grid slds-grid_align-spread">
+
+                        <lightning-button
+
+                            label="Previous"
+
+                            onclick={handlePrevious}>
+
+                        </lightning-button>
+
+                        <lightning-button
+
+                            label="Next"
+
+                            variant="brand"
+
+                            onclick={handleNext}>
+
+                        </lightning-button>
+
+                    </div>
+
+                </div>
+
+            </template>
+
+            <!-- STEP 3: SHIPPING INFORMATION -->
+
+            <template lwc:if={isStep3}>
+
+                <div class="slds-m-top_large">
+
+                    <h2 class="slds-text-heading_medium slds-m-bottom_medium">
+
+                        Shipping Information
+
+                    </h2>
+
+                    <template for:each={addresses} for:item="address">
+
+                        <div
+
+                            key={address.key}
+
+                            class="slds-box slds-m-bottom_medium">
+
+                            <lightning-combobox
+
+                                label="Address Type"
+
+                                data-key={address.key}
+
+                                name="Address_Type__c"
+
+                                value={address.Address_Type__c}
+
+                                options={addressTypeOptions}
+
+                                onchange={handleAddressChange}
+
+                                required>
+
+                            </lightning-combobox>
+
+                            <lightning-input-address
+
+                                data-key={address.key}
+
+                                address-label="Address"
+
+                                street-label="Street"
+
+                                city-label="City"
+
+                                province-label="State / Province"
+
+                                postal-code-label="Postal Code"
+
+                                country-label="Country"
+
+                                street={address.Street__c}
+
+                                city={address.City__c}
+
+                                province={address.State__c}
+
+                                postal-code={address.Postal_Code__c}
+
+                                country={address.Country__c}
+
+                                onchange={handleAddressChange}
+
+                                required>
+
+                            </lightning-input-address>
+
+                            <div class="slds-m-top_medium">
+
+                                <lightning-button
+
+                                    label="Remove Address"
+
+                                    variant="destructive-text"
+
+                                    data-key={address.key}
+
+                                    onclick={handleRemoveAddress}>
+
+                                </lightning-button>
+
+                            </div>
+
+                        </div>
+
+                    </template>
+
+                    <lightning-button
+
+                        label="Add Address"
+
+                        icon-name="utility:add"
+
+                        onclick={handleAddAddress}>
+
+                    </lightning-button>
+
+                    <div class="slds-m-top_large slds-grid slds-grid_align-spread">
+
+                        <lightning-button
+
+                            label="Previous"
+
+                            onclick={handlePrevious}
+
+                            disabled={isLoading}>
+
+                        </lightning-button>
+
+                        <lightning-button
+
+                            label="Save and Continue"
+
+                            variant="brand"
+
+                            onclick={handleSave}
+
+                            disabled={isLoading}>
+
+                        </lightning-button>
+
+                    </div>
+
+                </div>
+
+            </template>
+
+            <!-- STEP 4: DOCUMENTS -->
+
+            <template lwc:if={isStep4}>
+
+                <div class="slds-m-top_large">
+
+                    <h2 class="slds-text-heading_medium slds-m-bottom_medium">
+
+                        Documents
+
+                    </h2>
+
+                    <p class="slds-m-bottom_medium">
+
+                        Upload documents related to this Account.
+
+                    </p>
+
+                    <lightning-file-upload
+
+                        label="Upload Documents"
+
+                        name="accountDocuments"
+
+                        record-id={recordId}
+
+                        multiple
+
+                        onuploadfinished={handleUploadFinished}>
+
+                    </lightning-file-upload>
+
+                    <template lwc:if={uploadedFiles.length}>
+
+                        <div class="slds-m-top_medium">
+
+                            <h3 class="slds-text-heading_small">
+
+                                Uploaded Files
+
+                            </h3>
+
+                            <ul class="slds-list_dotted slds-m-top_small">
+
+                                <template for:each={uploadedFiles} for:item="file">
+
+                                    <li key={file.documentId}>
+
+                                        {file.name}
+
+                                    </li>
+
+                                </template>
+
+                            </ul>
+
+                        </div>
+
+                    </template>
+
+                </div>
+
+            </template>
+
+        </div>
+
+    </lightning-card>
+
+</template>
