@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Active_Flag__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Set to TRUE to activate. Set to FALSE to deactivate.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Active Flag</label>
+    <type>Checkbox</type>
+</CustomField>

@@ -1,0 +1,336 @@
+
+
+<template>
+    <lightning-card title="VGTS Travel Packages" icon-name="standard:travel_mode">
+        <div class="slds-p-around_medium">
+            <div class="catalogue-toolbar slds-m-bottom_medium">
+                <div>
+                    <h2 class="catalogue-title">Explore Travel Packages</h2>
+                    <p class="slds-text-color_weak">Choose travel services to add to this booking.</p>
+                </div>
+            </div>
+            <template lwc:if={loadError}>
+                <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_medium" role="alert">
+                    {loadError}
+                </div>
+            </template>
+            <template lwc:if={isLoading}>
+                <lightning-spinner alternative-text="Loading travel products" size="medium"></lightning-spinner>
+            </template>
+            <lightning-tabset active-tab-value={activeTab} onselect={handleTabChange}>
+                <lightning-tab label="Air Tickets" value="Air_Tickets">
+                    <div class="slds-box slds-theme_default slds-m-bottom_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Search Flights</h3>
+                        <div class="slds-grid slds-wrap slds-gutters">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
+                                <lightning-combobox label="Going From" value={filterOrigin} options={originOptions} data-field="filterOrigin" onchange={handleFilterChange} placeholder="All origins"></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
+                                <lightning-combobox label="Going To" value={filterDestination} options={destinationOptions} data-field="filterDestination" onchange={handleFilterChange} placeholder="All destinations"></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
+                                <lightning-combobox label="Flight Type" value={filterFlightType} options={flightTypeOptions} data-field="filterFlightType" onchange={handleFilterChange}></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
+                                <lightning-combobox label="Cabin Class" value={filterCabinClass} options={cabinClassOptions} data-field="filterCabinClass" onchange={handleFilterChange} placeholder="All cabin classes"></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
+                                <lightning-input type="number" label="Maximum Price" value={maxPrice} data-field="maxPrice" onchange={handleFilterChange} min="0"></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
+                                <lightning-input type="search" label="Search Flights" value={searchKeyword} data-field="searchKeyword" onchange={handleFilterChange} placeholder="Search name or supplier"></lightning-input>
+                            </div>
+                        </div>
+                        <lightning-button label="Clear Filters" onclick={handleClearFilters} icon-name="utility:refresh"></lightning-button>
+                    </div>
+                    <template lwc:if={displayAirTickets.length}>
+                        <div class="catalogue-grid">
+                            <template for:each={displayAirTickets} for:item="item">
+                                <article key={item.id} class="package-card">
+                                    <div class="package-image-wrap">
+                                        <template lwc:if={item.imageUrl}>
+                                            <img src={item.imageUrl} alt={item.name} class="package-image" />
+                                        </template>
+                                        <template lwc:else>
+                                            <div class="package-content"><lightning-icon icon-name="utility:world" size="large"></lightning-icon></div>
+                                        </template>
+                                    </div>
+                                    <div class="package-card-body">
+                                        <h3 class="slds-text-heading_small">{item.name}</h3>
+                                        <p class="slds-text-color_weak slds-m-top_x-small">{item.origin} → {item.destination}</p>
+                                        <p class="slds-m-top_x-small">{item.flightType} · {item.cabinClass}</p>
+                                        <p class="package-description slds-m-top_x-small">{item.description}</p>
+                                         <div class="card-footer">
+                                            <span class="package-price">
+                                                <lightning-formatted-number
+                                                    value={item.price}
+                                                    format-style="currency"
+                                                    currency-code="USD">
+                                                </lightning-formatted-number>
+                                            </span>
+                                        </div>
+                                        <div class="card-actions slds-grid slds-gutters_x-small slds-m-top_small">
+                                            <div class="slds-col"><lightning-button label="View Details" data-id={item.id} onclick={handleSelectService} class="full-width-button"></lightning-button></div>
+                                            <div class="slds-col"><lightning-button label="Add" variant="brand" data-id={item.id} onclick={handleAddPackage} class="full-width-button"></lightning-button></div>
+                                        </div>
+                                    </div>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <div class="empty-state"><lightning-icon icon-name="utility:search" size="large"></lightning-icon><p class="slds-m-top_small">No air tickets match these filters.</p></div>
+                    </template>
+                </lightning-tab>
+                <lightning-tab label="Hotels" value="Hotels">
+                    <div class="slds-box slds-theme_default slds-m-bottom_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Find Hotels</h3>
+                        <div class="slds-grid slds-wrap slds-gutters">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <lightning-combobox label="Destination" value={filterDestination} options={destinationOptions} data-field="filterDestination" onchange={handleFilterChange} placeholder="All destinations"></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <lightning-input type="search" label="Search Hotels" value={hotelSearchKeyword} data-field="hotelSearchKeyword" onchange={handleFilterChange} placeholder="Search hotel or supplier"></lightning-input>
+                            </div>
+                        </div>
+                        <lightning-button label="Clear Hotel Search" onclick={handleClearHotelFilters} icon-name="utility:refresh"></lightning-button>
+                    </div>
+                    <template lwc:if={displayHotels.length}>
+                        <div class="package-grid">
+                            <template for:each={displayHotels} for:item="item">
+                                <article key={item.id} class="package-card">
+                                    <div class="package-image-wrap">
+                                        <template lwc:if={item.imageUrl}>
+                                            <img src={item.imageUrl} alt={item.name} class="package-image" />
+                                        </template>
+                                        <template lwc:else>
+                                            <div class="package-image-placeholder"><lightning-icon icon-name="utility:home" size="large"></lightning-icon></div>
+                                        </template>
+                                    </div>
+                                    <div class="package-card-body">
+                                        <h3 class="slds-text-heading_small">{item.name}</h3>
+                                        <p class="slds-text-color_weak slds-m-top_x-small">{item.destination}</p>
+                                        <p class="package-description slds-m-top_x-small">{item.description}</p>
+                                        <div class="slds-grid slds-gutters_small slds-m-top_medium">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <lightning-input type="number" label="Number of Rooms" min="1" step="1" value={item.rooms} data-id={item.id} data-field="rooms" onchange={handleHotelQuantityChange}></lightning-input>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <lightning-input type="number" label="Number of Nights" min="1" step="1" value={item.nights} data-id={item.id} data-field="nights" onchange={handleHotelQuantityChange}></lightning-input>
+                                            </div>
+                                        </div>
+                                        <p class="package-price slds-m-top_medium">Total: {item.calculatedPrice}</p>
+                                        <p class="slds-text-body_small slds-text-color_weak">+$50 per additional room · +$30 per additional night</p>
+                                        <div class="slds-grid slds-gutters_x-small slds-m-top_medium">
+                                            <div class="slds-col"><lightning-button label="View Details" data-id={item.id} onclick={handleSelectService} class="full-width-button"></lightning-button></div>
+                                            <div class="slds-col"><lightning-button label="Add Hotel" variant="brand" data-id={item.id} onclick={handleAddPackage} class="full-width-button"></lightning-button></div>
+                                        </div>
+                                    </div>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <div class="empty-state"><lightning-icon icon-name="utility:search" size="large"></lightning-icon><p class="slds-m-top_small">No hotels found. Check that your active Salesforce products have Package Type set to Hotel and a Destination value.</p></div>
+                    </template>
+                </lightning-tab>
+                <lightning-tab label="Ground Transfers" value="Ground">
+                    <template lwc:if={displayTransfers.length}>
+                        <div class="package-grid">
+                            <template for:each={displayTransfers} for:item="item">
+                                <article key={item.id} class="package-card">
+                                    <div class="package-image-wrap">
+                                        <template lwc:if={item.imageUrl}>
+                                            <img src={item.imageUrl} alt={item.name} class="package-image" />
+                                        </template>
+                                        <template lwc:else>
+                                            <div class="package-image-placeholder"><lightning-icon icon-name="utility:travel_and_places" size="large"></lightning-icon></div>
+                                        </template>
+                                    </div>
+                                    <div class="package-card-body">
+                                        <h3 class="slds-text-heading_small">{item.name}</h3>
+                                        <p class="slds-text-color_weak slds-m-top_x-small">{item.destination}</p>
+                                        <p class="package-description slds-m-top_x-small">{item.description}</p>
+                                        <p class="package-price slds-m-top_small">{item.formattedPrice}</p>
+                                        <div class="slds-grid slds-gutters_x-small slds-m-top_small">
+                                            <div class="slds-col"><lightning-button label="View Details" data-id={item.id} onclick={handleSelectService} class="full-width-button"></lightning-button></div>
+                                            <div class="slds-col"><lightning-button label="Add Transfer" variant="brand" data-id={item.id} onclick={handleAddPackage} class="full-width-button"></lightning-button></div>
+                                        </div>
+                                    </div>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <div class="empty-state"><lightning-icon icon-name="utility:travel_and_places" size="large"></lightning-icon><p class="slds-m-top_small">No Ground Transfer products were returned. Check Product Type and Active status in Salesforce.</p></div>
+                    </template>
+                </lightning-tab>
+                <lightning-tab label="Ancillary Services" value="Ancillary">
+                    <template lwc:if={displayAncillaries.length}>
+                        <div class="package-grid">
+                            <template for:each={displayAncillaries} for:item="item">
+                                <article key={item.id} class="package-card">
+                                    <div class="package-image-wrap">
+                                        <template lwc:if={item.imageUrl}>
+                                            <img src={item.imageUrl} alt={item.name} class="package-image" />
+                                        </template>
+                                        <template lwc:else>
+                                            <div class="package-image-placeholder"><lightning-icon icon-name="utility:apps" size="large"></lightning-icon></div>
+                                        </template>
+                                    </div>
+                                    <div class="package-card-body">
+                                        <h3 class="slds-text-heading_small">{item.name}</h3>
+                                        <p class="slds-text-color_weak slds-m-top_x-small">{item.destination}</p>
+                                        <p class="package-description slds-m-top_x-small">{item.description}</p>
+                                        <p class="package-price slds-m-top_small">{item.formattedPrice}</p>
+                                        <div class="slds-grid slds-gutters_x-small slds-m-top_small">
+                                            <div class="slds-col"><lightning-button label="View Details" data-id={item.id} onclick={handleSelectService} class="full-width-button"></lightning-button></div>
+                                            <div class="slds-col"><lightning-button label="Add Service" variant="brand" data-id={item.id} onclick={handleAddPackage} class="full-width-button"></lightning-button></div>
+                                        </div>
+                                    </div>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+                    <template lwc:else>
+                        <div class="empty-state"><lightning-icon icon-name="utility:apps" size="large"></lightning-icon><p class="slds-m-top_small">No Ancillary products were returned. Check Product Type and Active status in Salesforce.</p></div>
+                    </template>
+                </lightning-tab>
+            </lightning-tabset>
+
+           <template lwc:if={selectedService}>
+                <section class="details-panel">
+                    <div class="details-heading">
+                        <h2>Package Details</h2>
+                        <lightning-button-icon
+                            icon-name="utility:close"
+                            alternative-text="Close details"
+                            title="Close details"
+                            onclick={handleCloseDetails}>
+                        </lightning-button-icon>
+                    </div>
+                    <div class="details-layout">
+                        <img src={selectedService.imageUrl} alt={selectedService.name} class="details-image"/>
+                        <div class="details-content">
+                             <h3 class="slds-text-heading_small slds-m-top_medium">{selectedService.name}</h3>
+        <p class="slds-m-top_x-small">{selectedService.description}</p>
+        <p class="slds-m-top_x-small"><strong>Category:</strong> {selectedService.category}</p>
+        <p class="slds-m-top_x-small"><strong>Destination:</strong> {selectedService.destination}</p>
+        <p class="slds-m-top_x-small"><strong>Supplier:</strong> {selectedService.supplier}</p>
+        <p class="package-price slds-m-top_small">{selectedService.formattedPrice}</p>
+                            <p class="details-price">
+                                <lightning-formatted-number value={selectedService.price} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                            </p>
+                            <lightning-button
+                                label="Add This Package"
+                                variant="brand"
+                                data-id={selectedService.id}
+                                onclick={handleAddPackage}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+
+            <!-- <template lwc:if={selectedService}>
+                <section class="slds-box slds-m-top_large">
+                    <div class="details-header">
+                        <h2 class="slds-text-heading_medium">Package Details</h2>
+                        <lightning-button-icon icon-name="utility:close" alternative-text="Close details" title="Close" onclick={handleCloseDetails} variant="bare"></lightning-button-icon>
+                    </div>
+                   <div class="slds-box slds-m-top_large">
+
+    <div class="slds-box slds-m-top_large">
+        <template lwc:if={selectedService.imageUrl}>
+            <img src={selectedService.imageUrl} alt={selectedService.name} class="details-image" />
+        </template>
+        <template lwc:else>
+            <div class="package-image-placeholder details-image-placeholder">
+                <lightning-icon icon-name="utility:photo" size="large"></lightning-icon>
+                <p>No image available</p>
+            </div>
+        </template>
+    </div>
+
+
+    <div class="slds-col">
+        <h3 class="slds-text-heading_small slds-m-top_medium">{selectedService.name}</h3>
+        <p class="slds-m-top_x-small">{selectedService.description}</p>
+        <p class="slds-m-top_x-small"><strong>Category:</strong> {selectedService.category}</p>
+        <p class="slds-m-top_x-small"><strong>Destination:</strong> {selectedService.destination}</p>
+        <p class="slds-m-top_x-small"><strong>Supplier:</strong> {selectedService.supplier}</p>
+        <p class="package-price slds-m-top_small">{selectedService.formattedPrice}</p>
+    </div> -->
+<!-- </div>
+                    <lightning-button class="slds-m-top_medium" variant="brand" label="Add to Booking" data-id={selectedService.id} onclick={handleAddPackage}></lightning-button>
+                </section>
+            </template> -->
+            <section class="selected-package-section slds-m-top_x-large">
+                <div class="slds-grid slds-wrap slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_medium">
+                    <h2 class="slds-text-heading_medium">My Travel Package</h2>
+                    <lightning-button label="Clear All" onclick={handleClearPackage} disabled={isSelectionEmpty}></lightning-button>
+                </div>
+                <template lwc:if={isSelectionEmpty}>
+                    <div class="empty-state"><lightning-icon icon-name="utility:cart" size="large"></lightning-icon><p class="slds-m-top_small">No services selected yet. Add products from the catalogue above.</p></div>
+                </template>
+                <template lwc:else>
+                    <div class="selected-service-list">
+                        <template for:each={services} for:item="service">
+                            <div key={service.id} class="selected-service-row">
+                                <div>
+                                <img src={service.imageUrl} class="mypackage-image"/> 
+                                </div>
+                                <div class="selected-service-info">
+                                    <strong>{service.name}</strong>
+                                    <p class="slds-text-body_small slds-text-color_weak">{service.category} · {service.destination}</p>
+                                    <p class="slds-text-body_small">{service.Description}</p>
+                                    <template lwc:if={service.hotelDescription}>
+                                        <p class="slds-text-body_small">{service.Description}</p>
+                                    </template>
+                                </div>
+                                <div class="selected-service-price">
+                                    <strong>${service.price}</strong>
+                                    <lightning-button-icon icon-name="utility:delete" alternative-text="Remove service" title="Remove" data-id={service.id} onclick={handleRemoveService} variant="bare"></lightning-button-icon>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="total-panel slds-m-top_medium">
+                     
+                        <span class="slds-text-heading_medium">Total Price</span>    
+                  <strong>
+                        <lightning-formatted-number class="slds-text-heading_large" style="color:red" value={totalPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                    </strong>
+ 
+                    </div>
+                            <lightning-combobox
+                    class="payment-method"
+                    label="Payment Method"
+                    value={paymentMethod}
+                    options={paymentMethodOptions}
+                    onchange={handlePaymentMethodChange}
+                    required>
+                </lightning-combobox>
+                    <div class="slds-m-top_medium">
+                        <lightning-button variant="brand" label="Save Booking Services" onclick={handleSavePackage} disabled={isSelectionEmpty} class="slds-m-right_small"></lightning-button>
+                    </div>
+                </template>
+            </section>
+ <section class="payment-panel">
+
+
+                <lightning-button
+                    class="confirm-payment"
+                    label="Create Payment Record"
+                    variant="brand"
+                    onclick={handleRecordPayment}
+                    disabled={isSaving}>
+                </lightning-button>
+            </section>
+
+        </div>
+    </lightning-card>
+</template>
+
+
