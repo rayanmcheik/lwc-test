@@ -1,5 +1,3 @@
-
-
 <template>
     <lightning-card title="VGTS Travel Packages" icon-name="standard:travel_mode">
         <div class="slds-p-around_medium">
@@ -312,9 +310,29 @@
                     onchange={handlePaymentMethodChange}
                     required>
                 </lightning-combobox>
-                    <div class="slds-m-top_medium">
-                        <lightning-button variant="brand" label="Save Booking Services" onclick={handleSavePackage} disabled={isSelectionEmpty} class="slds-m-right_small"></lightning-button>
-                    </div>
+                    
+
+<div class="slds-m-top_medium">
+    <lightning-button
+        variant="brand"
+        label="Save Booking Services"
+        onclick={handleSave}
+        disabled={isSaving}
+        class="slds-m-right_small">
+    </lightning-button>
+
+
+    <lightning-button
+        variant="neutral"
+        label="Create Quote"
+        onclick={handleCreateQuote}
+        disabled={isSaving}
+        class="slds-m-right_small">
+    </lightning-button>
+</div>
+
+
+
                 </template>
             </section>
  <section class="payment-panel">
@@ -332,5 +350,3 @@
         </div>
     </lightning-card>
 </template>
-
-

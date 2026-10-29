@@ -1,10 +1,12 @@
-
-
 import { LightningElement, api, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getTravelPackages from '@salesforce/apex/VGTSBookingPackageController.getTravelPackages';
 import saveBookingServices from '@salesforce/apex/VGTSBookingPackageController.saveBookingServices';
 import savePayment from '@salesforce/apex/VGTSBookingPackageController.savePayment';
+
+import createBookingQuote from
+    '@salesforce/apex/VGTSBookingPackageController.createBookingQuote';
+
 
 
 const HOTEL_ROOM_FEE = 50;
@@ -718,6 +720,221 @@ export default class VgtsBookingServiceSelector extends LightningElement {
     }
 
 
+
+async handleSave() {
+    if (!this.recordId) {
+        this.showToast(
+            'Booking record required',
+            'Open this component on an Opportunity record page.',
+            'error'
+        );
+        return;
+    }
+
+
+    if (!this.services || this.services.length === 0) {
+        this.showToast(
+            'No services selected',
+            'Add at least one service before saving.',
+            'warning'
+        );
+        return;
+    }
+
+
+    this.isSaving = true;
+
+
+    try {
+        const selectedServices = this.services.map((service) => ({
+            // This must be the Salesforce Product2 record ID.
+            productId: service.productId || service.id,
+            name: service.name,
+            type: service.type,
+            category: service.category,
+            serviceType: service.serviceType,
+            supplier: service.supplier,
+            description: service.description || service.Description,
+            destination: service.destination,
+            basePrice: service.basePrice,
+            price: Number(service.price) || 0,
+            sellingPrice: Number(service.price) || 0,
+            quantity: Number(service.quantity) > 0
+                ? Number(service.quantity)
+                : 1,
+            rooms: service.rooms,
+            nights: service.nights,
+            roomCategory: service.roomCategory,
+            mealPlan: service.mealPlan,
+            taxes: service.taxes
+        }));
+
+
+        const savedCount = await saveBookingServices({
+            bookingId: this.recordId,
+            selectedServices
+        });
+
+
+        this.showToast(
+            'Booking services saved',
+            `${savedCount} opportunity product(s) saved successfully.`,
+            'success'
+        );
+
+
+        // Refresh your UI here if you have a wired Apex method.
+    } catch (error) {
+        this.showToast(
+            'Save failed',
+            this.reduceError(error),
+            'error'
+        );
+    } finally {
+        this.isSaving = false;
+    }
+}
+
+
+async handleRecordPayment() {
+    if (!this.recordId) {
+        this.showToast(
+            'Booking record required',
+            'Open this component on an Opportunity record page.',
+            'error'
+        );
+        return;
+    }
+
+
+    if (!this.services || this.services.length === 0) {
+        this.showToast(
+            'No payment amount',
+            'Add at least one service before creating a payment.',
+            'warning'
+        );
+        return;
+    }
+
+
+    if (!this.paymentMethod) {
+        this.showToast(
+            'Payment method required',
+            'Select a payment method.',
+            'warning'
+        );
+        return;
+    }
+
+
+    const amount = Number(this.totalPrice);
+
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+        this.showToast(
+            'Invalid payment amount',
+            'The payment total must be greater than zero.',
+            'error'
+        );
+        return;
+    }
+
+
+    this.isSaving = true;
+
+
+    try {
+        const paymentId = await savePayment({
+            bookingId: this.recordId,
+            amount,
+            method: this.paymentMethod,
+            paymentDate: new Date().toISOString().slice(0, 10),
+            status: 'Pending'
+        });
+
+
+        this.showToast(
+            'Payment record created',
+            'Payment record ID: ' + paymentId +
+                '. No card was charged.',
+            'success'
+        );
+
+
+        this.paymentMethod = '';
+    } catch (error) {
+        this.showToast(
+            'Payment failed',
+            this.reduceError(error),
+            'error'
+        );
+    } finally {
+        this.isSaving = false;
+    }
+}
+
+
+async handleCreateQuote() {
+    if (!this.recordId) {
+        this.showToast(
+            'Booking record required',
+            'Open this component on an Opportunity record page.',
+            'error'
+        );
+        return;
+    }
+
+
+    this.isSaving = true;
+
+
+    try {
+        const quoteId = await createBookingQuote({
+            bookingId: this.recordId
+        });
+
+
+        this.showToast(
+            'Quote created',
+            'Your quote was created successfully. Quote ID: ' + quoteId,
+            'success'
+        );
+    } catch (error) {
+        this.showToast(
+            'Quote creation failed',
+            this.reduceError(error),
+            'error'
+        );
+    } finally {
+        this.isSaving = false;
+    }
+}
+
+
+showToast(title, message, variant) {
+    this.dispatchEvent(
+        new ShowToastEvent({
+            title,
+            message,
+            variant
+        })
+    );
+}
+
+
+reduceError(error) {
+    if (Array.isArray(error?.body)) {
+        return error.body.map((item) => item.message).join(', ');
+    }
+
+
+    return error?.body?.message ||
+        error?.message ||
+        'An unexpected error occurred.';
+}
+
+
+
     async handleRecordPayment() {
         if (!this.recordId) {
             this.showToast(
@@ -768,5 +985,3 @@ export default class VgtsBookingServiceSelector extends LightningElement {
         this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
     }
 }
-
-
