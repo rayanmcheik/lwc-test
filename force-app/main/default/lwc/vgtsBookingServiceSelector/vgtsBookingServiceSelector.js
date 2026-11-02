@@ -16,7 +16,7 @@ const HOTEL_NIGHT_FEE = 30;
 export default class VgtsBookingServiceSelector extends LightningElement {
     @api recordId;
 
-
+ savedCount ;
     travelPackages = [];
     selectedServices = [];
     selectedService = null;
@@ -62,7 +62,7 @@ export default class VgtsBookingServiceSelector extends LightningElement {
     ];
 
 
-    @wire(getTravelPackages)
+    @wire(getTravelPackages,{bookingId : '$recordId'})
     wiredPackages({ data, error }) {
         this.isLoading = false;
 
@@ -615,113 +615,17 @@ export default class VgtsBookingServiceSelector extends LightningElement {
         this.selectedService = null;
     }
 
-
-    async handleSavePackage() {
-        if (!this.recordId) {
-            this.showToast(
-                'Booking record required',
-                'Open this component on a Booking record page before saving services.',
-                'error'
-            );
-            return;
-        }
-
-
-        if (!this.hasServices) {
-            this.showToast('No services selected', 'Add a service before saving.', 'warning');
-            return;
-        }
-
-
-        this.isSaving = true;
-
-
-        try {
-            const selectedServices = this.selectedServices.map((service) => ({
-                packageId: service.packageId,
-                productId: service.packageId,
-                name: service.name,
-                type: service.type,
-                category: service.category,
-                serviceType: service.serviceType,
-                supplier: service.supplier,
-                description: service.description,
-                destination: service.destination,
-                basePrice: service.basePrice,
-                price: service.price,
-                sellingPrice: service.price,
-                rooms: service.rooms,
-                nights: service.nights,
-                quantity: service.quantity,
-                roomCategory: service.roomCategory,
-                mealPlan: service.mealPlan
-            }));
-
-
-            await saveBookingServices({
-                bookingId: this.recordId,
-                selectedServices
-            });
-
-
-            this.showToast('Success', 'Services were saved to the booking.', 'success');
-        } catch (error) {
-            this.showToast('Save failed', this.reduceError(error), 'error');
-        } finally {
-            this.isSaving = false;
-        }
-                if (!this.recordId) {
-            this.showToast(
-                'Booking record required',
-                'Open this component on a Booking record page before creating a payment.',
-                'error'
-            );
-            return;
-        }
-
-
-        if (this.totalPrice <= 0) {
-            this.showToast('No payment amount', 'Add at least one service to calculate the payment amount.', 'warning');
-            return;
-        }
-
-
-        if (!this.paymentMethod) {
-            this.showToast('Payment method required', 'Select a payment method.', 'warning');
-            return;
-        }
-
-
-        this.isSaving = true;
-
-
-        try {
-            await savePayment({
-                bookingId: this.recordId,
-                amount: this.totalPrice,
-                method: this.paymentMethod,
-                paymentDate: new Date().toISOString().slice(0, 10),
-                status: 'Completed'
-            });
-
-
-            this.showToast('Payment created', 'The payment record was created. No card was charged.', 'success');
-            this.paymentMethod = '';
-        } catch (error) {
-            this.showToast('Payment failed', this.reduceError(error), 'error');
-        } finally {
-            this.isSaving = false;
-        }
-    }
-
-
     handlePaymentMethodChange(event) {
         this.paymentMethod = event.detail.value;
     }
 
 
-
 async handleSave() {
+    if (this.isSaving) {
+        return;
+    }
+
+
     if (!this.recordId) {
         this.showToast(
             'Booking record required',
@@ -732,7 +636,7 @@ async handleSave() {
     }
 
 
-    if (!this.services || this.services.length === 0) {
+    if (this.selectedServices.length === 0) {
         this.showToast(
             'No services selected',
             'Add at least one service before saving.',
@@ -746,27 +650,12 @@ async handleSave() {
 
 
     try {
-        const selectedServices = this.services.map((service) => ({
-            // This must be the Salesforce Product2 record ID.
-            productId: service.productId || service.id,
-            name: service.name,
-            type: service.type,
-            category: service.category,
-            serviceType: service.serviceType,
-            supplier: service.supplier,
-            description: service.description || service.Description,
-            destination: service.destination,
-            basePrice: service.basePrice,
-            price: Number(service.price) || 0,
-            sellingPrice: Number(service.price) || 0,
-            quantity: Number(service.quantity) > 0
-                ? Number(service.quantity)
-                : 1,
-            rooms: service.rooms,
-            nights: service.nights,
-            roomCategory: service.roomCategory,
-            mealPlan: service.mealPlan,
-            taxes: service.taxes
+        const selectedServices = this.selectedServices.map((service) => ({
+            productId: service.packageId,
+            quantity: service.quantity || 1,
+            rooms: service.rooms || 1,
+            nights: service.nights || 1,
+            price: service.price
         }));
 
 
@@ -776,14 +665,12 @@ async handleSave() {
         });
 
 
+        this.savedCount = savedCount;
         this.showToast(
             'Booking services saved',
-            `${savedCount} opportunity product(s) saved successfully.`,
+            `${savedCount} Opportunity Product(s) saved successfully.`,
             'success'
         );
-
-
-        // Refresh your UI here if you have a wired Apex method.
     } catch (error) {
         this.showToast(
             'Save failed',

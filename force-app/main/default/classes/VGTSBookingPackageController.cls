@@ -1,199 +1,167 @@
 public with sharing class VGTSBookingPackageController {
 
 
-    @AuraEnabled(cacheable=true)
-    public static List<Map<String, Object>> getTravelPackages() {
-        Map<String, Schema.SObjectField> productFields =
-            Schema.SObjectType.Product2.fields.getMap();
-
-
-        Set<String> selectedFields = new Set<String>{
-            'Id', 'Name', 'Description', 'IsActive'
-        };
-
-
-        List<String> optionalFields = new List<String>{
-            'Destination__c',
-            'Departure_Airport__c',
-            'Arrival_Airport__c',
-            'Origin__c',
-            'Package_Type__c',
-            'Flight_Type__c',
-            'Cabin_Class__c',
-            'Departure_Date__c',
-            'Return_Date__c',
-            'Package_Description__c',
-            'Supplier__c',
-            'Supplier_Name__c',
-            'Base_Price__c',
-            'Supplier_Cost__c',
-            'Cost__c',
-            'Markup__c',
-            'Agency_Markup__c',
-            'Fees__c',
-            'Taxes__c',
-            'Selling_Price__c',
-            'Retail_Price__c',
-            'Price__c',
-            'Active__c',
-            'Is_Active__c'
-        };
-
-
-        for (String fieldName : optionalFields) {
-            if (productFields.containsKey(fieldName)) {
-                selectedFields.add(fieldName);
-            }
-        }
-
-
-        List<String> fieldList = new List<String>();
-        fieldList.addAll(selectedFields);
-
-
-        String queryString =
-            'SELECT ' + String.join(fieldList, ',') +
-            ' FROM Product2 WHERE IsActive = true ORDER BY Name';
-
-
-        List<SObject> products = Database.query(queryString);
-        List<Map<String, Object>> results =
-            new List<Map<String, Object>>();
-
-
-        Set<Id> productIds = new Set<Id>();
-        for (SObject product : products) {
-            productIds.add((Id) product.get('Id'));
-        }
-
-
-        Map<Id, String> imageUrls = new Map<Id, String>();
-
-
-        if (!productIds.isEmpty()) {
-            for (ContentDocumentLink linkRecord : [
-                SELECT LinkedEntityId,
-                       ContentDocument.LatestPublishedVersionId
-                FROM ContentDocumentLink
-                WHERE LinkedEntityId IN :productIds
-            ]) {
-                if (linkRecord.ContentDocument.LatestPublishedVersionId != null
-                    && !imageUrls.containsKey(linkRecord.LinkedEntityId)) {
-                    imageUrls.put(
-                        linkRecord.LinkedEntityId,
-                        '/sfc/servlet.shepherd/version/download/' +
-                        linkRecord.ContentDocument.LatestPublishedVersionId
-                    );
-                }
-            }
-        }
-
-
-        for (SObject product : products) {
-            Map<String, Object> item = new Map<String, Object>();
-
-
-            item.put('id', product.get('Id'));
-            item.put('name', product.get('Name'));
-            item.put('description', firstValue(product, new List<String>{
-                'Package_Description__c', 'Description'
-            }));
-
-
-            item.put('destination',
-                firstValue(product, new List<String>{'Destination__c'}));
-
-
-            item.put('departureAirport',
-                firstValue(product, new List<String>{
-                    'Departure_Airport__c', 'Origin__c'
-                }));
-
-
-            item.put('arrivalAirport',
-                firstValue(product, new List<String>{
-                    'Arrival_Airport__c'
-                }));
-
-
-            item.put('origin',
-                firstValue(product, new List<String>{'Origin__c'}));
-
-
-            item.put('packageType',
-                firstValue(product, new List<String>{'Package_Type__c'}));
-
-
-            item.put('flightType',
-                firstValue(product, new List<String>{'Flight_Type__c'}));
-
-
-            item.put('cabinClass',
-                firstValue(product, new List<String>{'Cabin_Class__c'}));
-
-
-            item.put('departureDate',
-                firstValue(product, new List<String>{'Departure_Date__c'}));
-
-
-            item.put('arrivalDate',
-                firstValue(product, new List<String>{'Return_Date__c'}));
-
-
-            item.put('supplier',
-                firstValue(product, new List<String>{
-                    'Supplier__c', 'Supplier_Name__c'
-                }));
-
-
-            Decimal basePrice = toDecimal(firstValue(product, new List<String>{
-                'Base_Price__c', 'Supplier_Cost__c', 'Cost__c',
-                'Selling_Price__c', 'Retail_Price__c', 'Price__c'
-            }));
-
-
-            Decimal markup = toDecimal(firstValue(product, new List<String>{
-                'Markup__c', 'Agency_Markup__c'
-            }));
-
-
-            Decimal fees = toDecimal(firstValue(product, new List<String>{
-                'Fees__c'
-            }));
-
-
-            Decimal taxes = toDecimal(firstValue(product, new List<String>{
-                'Taxes__c'
-            }));
-
-
-            Decimal sellingPrice = toDecimal(firstValue(product, new List<String>{
-                'Selling_Price__c', 'Retail_Price__c', 'Price__c'
-            }));
-
-
-            if (sellingPrice == null || sellingPrice <= 0) {
-                sellingPrice = (basePrice == null ? 0 : basePrice)
-                    + (markup == null ? 0 : markup)
-                    + (fees == null ? 0 : fees)
-                    + (taxes == null ? 0 : taxes);
-            }
-
-
-            item.put('basePrice', basePrice == null ? 0 : basePrice);
-            item.put('markup', markup == null ? 0 : markup);
-            item.put('fees', fees == null ? 0 : fees);
-            item.put('taxes', taxes == null ? 0 : taxes);
-            item.put('price', sellingPrice == null ? 0 : sellingPrice);
-            item.put('imageUrl', imageUrls.get((Id) product.get('Id')));
-
-
-            results.add(item);
-        }
-
-
-        return results;
+ @AuraEnabled(cacheable=true)
+public static List<Map<String, Object>> getTravelPackages(Id bookingId) {
+    if (bookingId == null) {
+        throw new AuraHandledException('Open an Opportunity to view its products.');
     }
+
+
+    Opportunity booking = [
+        SELECT Id, Pricebook2Id
+        FROM Opportunity
+        WHERE Id = :bookingId
+        LIMIT 1
+    ];
+
+
+    if (booking.Pricebook2Id == null) {
+        throw new AuraHandledException(
+            'Assign the correct Price Book to this Opportunity first.'
+        );
+    }
+
+
+    Id pricebookId = booking.Pricebook2Id;
+ //   String currencyCode = booking.CurrencyIsoCode;
+
+
+    Pricebook2 pricebook = [
+        SELECT IsActive
+        FROM Pricebook2
+        WHERE Id = :pricebookId
+        LIMIT 1
+    ];
+
+
+    if (!pricebook.IsActive) {
+        throw new AuraHandledException('The Opportunity Price Book is inactive.');
+    }
+
+
+    Map<String, Schema.SObjectField> productFields =
+        Schema.SObjectType.Product2.fields.getMap();
+
+
+    List<String> fields = new List<String>{
+        'Id', 'Product2Id', 'UnitPrice',
+        'Product2.Name', 'Product2.Description'
+    };
+
+
+    for (String fieldName : new List<String>{
+        'Destination__c', 'Departure_Airport__c', 'Arrival_Airport__c',
+        'Origin__c', 'Package_Type__c', 'Flight_Type__c',
+        'Cabin_Class__c', 'Departure_Date__c', 'Return_Date__c',
+        'Package_Description__c', 'Supplier__c', 'Supplier_Name__c'
+    }) {
+        if (productFields.containsKey(fieldName)) {
+            fields.add('Product2.' + fieldName);
+        }
+    }
+
+
+    String soql =
+        'SELECT ' + String.join(fields, ', ') +
+        ' FROM PricebookEntry' +
+        ' WHERE Pricebook2Id = :pricebookId' +
+        ' AND CurrencyIsoCode = :currencyCode' +
+        ' AND IsActive = true' +
+        ' AND Product2.IsActive = true' +
+        ' ORDER BY Product2.Name';
+
+
+    List<PricebookEntry> entries = Database.query(soql);
+
+
+    Set<Id> productIds = new Set<Id>();
+    for (PricebookEntry entry : entries) {
+        productIds.add(entry.Product2Id);
+    }
+
+
+    Map<Id, String> imageUrls = new Map<Id, String>();
+
+
+    if (!productIds.isEmpty()) {
+        for (ContentDocumentLink linkRecord : [
+            SELECT LinkedEntityId,
+                   ContentDocument.LatestPublishedVersionId
+            FROM ContentDocumentLink
+            WHERE LinkedEntityId IN :productIds
+        ]) {
+            if (!imageUrls.containsKey(linkRecord.LinkedEntityId)
+                && linkRecord.ContentDocument.LatestPublishedVersionId != null) {
+                imageUrls.put(
+                    linkRecord.LinkedEntityId,
+                    '/sfc/servlet.shepherd/version/download/' +
+                    linkRecord.ContentDocument.LatestPublishedVersionId
+                );
+            }
+        }
+    }
+
+
+    List<Map<String, Object>> results = new List<Map<String, Object>>();
+
+
+    for (PricebookEntry entry : entries) {
+        Product2 product = entry.Product2;
+        Map<String, Object> item = new Map<String, Object>();
+
+
+        item.put('id', entry.Product2Id);
+        item.put('name', product.Name);
+        item.put('description', firstValue(product, new List<String>{
+            'Package_Description__c', 'Description'
+        }));
+        item.put('destination', firstValue(product, new List<String>{
+            'Destination__c'
+        }));
+        item.put('departureAirport', firstValue(product, new List<String>{
+            'Departure_Airport__c', 'Origin__c'
+        }));
+        item.put('arrivalAirport', firstValue(product, new List<String>{
+            'Arrival_Airport__c'
+        }));
+        item.put('origin', firstValue(product, new List<String>{
+            'Origin__c'
+        }));
+        item.put('packageType', firstValue(product, new List<String>{
+            'Package_Type__c'
+        }));
+        item.put('flightType', firstValue(product, new List<String>{
+            'Flight_Type__c'
+        }));
+        item.put('cabinClass', firstValue(product, new List<String>{
+            'Cabin_Class__c'
+        }));
+        item.put('departureDate', firstValue(product, new List<String>{
+            'Departure_Date__c'
+        }));
+        item.put('arrivalDate', firstValue(product, new List<String>{
+            'Return_Date__c'
+        }));
+        item.put('supplier', firstValue(product, new List<String>{
+            'Supplier__c', 'Supplier_Name__c'
+        }));
+
+
+        // The Price Book Entry is the price source.
+        item.put('basePrice', entry.UnitPrice);
+        item.put('price', entry.UnitPrice);
+    //    item.put('currencyCode', currencyCode);
+        item.put('imageUrl', imageUrls.get(entry.Product2Id));
+
+
+        results.add(item);
+    }
+
+
+    return results;
+}
+
 
 
     private static Object firstValue(SObject record, List<String> fieldNames) {
@@ -247,22 +215,16 @@ public with sharing class VGTSBookingPackageController {
     }
 
 
-   @AuraEnabled
+@AuraEnabled
 public static Integer saveBookingServices(
     Id bookingId,
     List<Map<String, Object>> selectedServices
 ) {
     if (bookingId == null) {
-        throw new AuraHandledException(
-            'Booking record ID is missing.'
-        );
+        throw new AuraHandledException('Booking record ID is missing.');
     }
-
-
     if (selectedServices == null || selectedServices.isEmpty()) {
-        throw new AuraHandledException(
-            'Please add at least one travel service.'
-        );
+        throw new AuraHandledException('Add at least one travel service.');
     }
 
 
@@ -275,155 +237,182 @@ public static Integer saveBookingServices(
     ];
 
 
-    // Use the Standard Price Book if the booking has none.
+    if (booking.Pricebook2Id == null) {
+        throw new AuraHandledException(
+            'Assign the correct Price Book to this Opportunity first.'
+        );
+    }
+
+
     Id pricebookId = booking.Pricebook2Id;
+    String currencyCode = booking.CurrencyIsoCode;
 
 
-    if (pricebookId == null) {
-        Id standardPricebookId = Test.isRunningTest()
-            ? Test.getStandardPricebookId()
-            : [SELECT Id FROM Pricebook2
-               WHERE IsStandard = true LIMIT 1].Id;
-
-
-        Pricebook2 standardBook = [
-            SELECT Id, IsActive
-            FROM Pricebook2
-            WHERE Id = :standardPricebookId
-            LIMIT 1
-        ];
-
-
-        if (!standardBook.IsActive) {
-            throw new AuraHandledException(
-                'Activate the Standard Price Book first.'
-            );
-        }
-
-
-        booking.Pricebook2Id = standardPricebookId;
-        update booking;
-        pricebookId = standardPricebookId;
+    Pricebook2 pricebook = [
+        SELECT IsActive
+        FROM Pricebook2
+        WHERE Id = :pricebookId
+        LIMIT 1
+    ];
+    if (!pricebook.IsActive) {
+        throw new AuraHandledException('The Opportunity Price Book is inactive.');
     }
 
 
     Set<Id> productIds = new Set<Id>();
+    List<Id> selectedProductIds = new List<Id>();
 
 
     for (Map<String, Object> item : selectedServices) {
-        Object rawId = item.get('productId');
-
-
-        if (rawId == null) {
-            rawId = item.get('packageId');
+        if (item == null) {
+            throw new AuraHandledException('A selected service is empty.');
         }
 
 
+        Object rawId = item.get('productId');
         if (rawId == null) {
-            throw new AuraHandledException(
-                'A selected service is missing its Product2 ID.'
-            );
+            rawId = item.get('packageId');
+        }
+        if (rawId == null) {
+            throw new AuraHandledException('A service is missing its Product ID.');
         }
 
 
         Id productId;
-
-
         try {
             productId = (Id) String.valueOf(rawId);
         } catch (Exception ex) {
-            throw new AuraHandledException(
-                'A selected service has an invalid product ID.'
-            );
+            throw new AuraHandledException('A service has an invalid Product ID.');
         }
 
 
         if (productId.getSObjectType() != Product2.SObjectType) {
-            throw new AuraHandledException(
-                'A selected service ID is not a Product2 record.'
-            );
+            throw new AuraHandledException('A service ID is not a Product record.');
         }
 
 
+        selectedProductIds.add(productId);
         productIds.add(productId);
     }
 
 
-    Map<Id, PricebookEntry> entryByProduct =
-        new Map<Id, PricebookEntry>();
+    Boolean hasPackageType = Schema.SObjectType.Product2
+        .fields.getMap().containsKey('Package_Type__c');
 
 
-    for (PricebookEntry entry : [
-        SELECT Id, Product2Id, UnitPrice, CurrencyIsoCode
-        FROM PricebookEntry
-        WHERE Pricebook2Id = :pricebookId
-        AND Product2Id IN :productIds
-        AND IsActive = true
-    ]) {
+    String soql =
+        'SELECT Id, Product2Id, UnitPrice' +
+        (hasPackageType ? ', Product2.Package_Type__c' : '') +
+        ' FROM PricebookEntry' +
+        ' WHERE Pricebook2Id = :pricebookId' +
+        ' AND CurrencyIsoCode = :currencyCode' +
+        ' AND Product2Id IN :productIds' +
+        ' AND IsActive = true' +
+        ' AND Product2.IsActive = true';
+
+
+    Map<Id, PricebookEntry> entryByProduct = new Map<Id, PricebookEntry>();
+    for (PricebookEntry entry : Database.query(soql)) {
         entryByProduct.put(entry.Product2Id, entry);
     }
 
 
-    List<OpportunityLineItem> lines =
-        new List<OpportunityLineItem>();
+    List<OpportunityLineItem> lines = new List<OpportunityLineItem>();
 
 
-    for (Map<String, Object> item : selectedServices) {
-        Id productId = (Id) String.valueOf(
-            item.containsKey('productId')
-                ? item.get('productId')
-                : item.get('packageId')
-        );
-
-
-        PricebookEntry entry = entryByProduct.get(productId);
+    for (Integer i = 0; i < selectedServices.size(); i++) {
+        Map<String, Object> item = selectedServices[i];
+        PricebookEntry entry = entryByProduct.get(selectedProductIds[i]);
 
 
         if (entry == null) {
             throw new AuraHandledException(
-                'A selected product has no active price-book entry. ' +
-                'Add an active price for every selected product.'
+                'A selected product has no active price in this ' +
+                'Opportunity Price Book and currency.'
             );
         }
 
 
         Decimal quantity = readDecimal(item.get('quantity'));
-        if (quantity == null || quantity <= 0) {
+        if (quantity == null) {
             quantity = 1;
         }
-
-
-        Decimal unitPrice = readDecimal(item.get('sellingPrice'));
-        if (unitPrice == null) {
-            unitPrice = readDecimal(item.get('price'));
+        if (quantity <= 0) {
+            throw new AuraHandledException('Quantity must be greater than zero.');
         }
-        if (unitPrice == null || unitPrice < 0) {
-            unitPrice = entry.UnitPrice;
+
+
+        Decimal unitPrice = entry.UnitPrice;
+        String packageType = '';
+
+
+        if (hasPackageType
+            && entry.Product2.get('Package_Type__c') != null) {
+            packageType = String.valueOf(
+                entry.Product2.get('Package_Type__c')
+            ).toLowerCase();
+        }
+
+
+        Boolean isHotel = packageType.contains('hotel')
+            || packageType.contains('accommodation');
+
+
+        Integer rooms = 1;
+        Integer nights = 1;
+
+
+        if (isHotel) {
+            Decimal roomValue = readDecimal(item.get('rooms'));
+            Decimal nightValue = readDecimal(item.get('nights'));
+
+
+            if (roomValue != null
+                && (roomValue < 1 || roomValue != roomValue.intValue())) {
+                throw new AuraHandledException(
+                    'Number of rooms must be a whole number greater than zero.'
+                );
+            }
+            if (nightValue != null
+                && (nightValue < 1 || nightValue != nightValue.intValue())) {
+                throw new AuraHandledException(
+                    'Number of nights must be a whole number greater than zero.'
+                );
+            }
+
+
+            rooms = roomValue == null ? 1 : roomValue.intValue();
+            nights = nightValue == null ? 1 : nightValue.intValue();
+
+
+            unitPrice += ((rooms - 1) * 50) + ((nights - 1) * 30);
+        }
+
+
+        // Detect a price change since the catalogue was loaded.
+        Decimal displayedPrice = readDecimal(item.get('price'));
+        if (displayedPrice != null
+            && displayedPrice.setScale(2) != unitPrice.setScale(2)) {
+            throw new AuraHandledException(
+                'A selected price has changed. Refresh the page and add ' +
+                'the service again.'
+            );
         }
 
 
         OpportunityLineItem line = new OpportunityLineItem(
             OpportunityId = booking.Id,
-            PricebookEntryId = entry.Id,
+            Product2Id = entry.Product2Id, 
             Quantity = quantity,
             UnitPrice = unitPrice
         );
 
 
-        putIfAvailable(line, 'Service_Name__c', item.get('name'));
-        putIfAvailable(line, 'Service_Type__c', item.get('serviceType'));
-        putIfAvailable(line, 'Supplier__c', item.get('supplier'));
-        putIfAvailable(line, 'Description__c', item.get('description'));
-        putIfAvailable(line, 'Travel_Package__c', productId);
-        putIfAvailable(line, 'Supplier_Cost__c', item.get('basePrice'));
-        putIfAvailable(line, 'Selling_Price__c', unitPrice);
-        putIfAvailable(line, 'Taxes__c', item.get('taxes'));
-        putIfAvailable(line, 'Quantity__c', quantity);
-        putIfAvailable(line, 'Hotel_Name__c', item.get('name'));
-        putIfAvailable(line, 'Room_Category__c', item.get('roomCategory'));
-        putIfAvailable(line, 'Meal_Plan__c', item.get('mealPlan'));
-        putIfAvailable(line, 'Number_Of_Rooms__c', item.get('rooms'));
-        putIfAvailable(line, 'Number_Of_Nights__c', item.get('nights'));
+        if (isHotel) {
+            line.Description =
+                String.valueOf(rooms) + ' room(s), ' +
+                String.valueOf(nights) + ' night(s)';
+        }
 
 
         lines.add(line);
