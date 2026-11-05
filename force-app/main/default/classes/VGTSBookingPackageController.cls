@@ -66,7 +66,6 @@ public static List<Map<String, Object>> getTravelPackages(Id bookingId) {
         'SELECT ' + String.join(fields, ', ') +
         ' FROM PricebookEntry' +
         ' WHERE Pricebook2Id = :pricebookId' +
-        ' AND CurrencyIsoCode = :currencyCode' +
         ' AND IsActive = true' +
         ' AND Product2.IsActive = true' +
         ' ORDER BY Product2.Name';
@@ -245,7 +244,7 @@ public static Integer saveBookingServices(
 
 
     Id pricebookId = booking.Pricebook2Id;
-    String currencyCode = booking.CurrencyIsoCode;
+   // String currencyCode = booking.CurrencyIsoCode;
 
 
     Pricebook2 pricebook = [
@@ -305,7 +304,7 @@ public static Integer saveBookingServices(
         (hasPackageType ? ', Product2.Package_Type__c' : '') +
         ' FROM PricebookEntry' +
         ' WHERE Pricebook2Id = :pricebookId' +
-        ' AND CurrencyIsoCode = :currencyCode' +
+   //     ' AND CurrencyIsoCode = :currencyCode' +
         ' AND Product2Id IN :productIds' +
         ' AND IsActive = true' +
         ' AND Product2.IsActive = true';
