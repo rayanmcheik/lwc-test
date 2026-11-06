@@ -1,4 +1,6 @@
+
 global with sharing class VisaWrapper {
+
     global class VisaCheckInputWrapper {
         global VisaCheckInputWrapper() {}
 
@@ -15,16 +17,12 @@ global with sharing class VisaWrapper {
         @InvocableVariable global Id jobId;
     }
 
-    // One external Visa__c record.
     public class VisaRecordWrapper {
         @AuraEnabled public String Passport_c { get; set; }
         @AuraEnabled public String Destination_c { get; set; }
         @AuraEnabled public Boolean Visa_Required_c { get; set; }
         @AuraEnabled public String Visa_Type_c { get; set; }
-
-        // Remains text: "90 days", "Unlimited", etc.
         @AuraEnabled public String Allowed_Stay_c { get; set; }
-
         @AuraEnabled public String Notes_c { get; set; }
     }
 
@@ -39,6 +37,7 @@ global with sharing class VisaWrapper {
         global VisaValidationResult() {}
 
         @AuraEnabled global Boolean isAllowed { get; set; }
+        @AuraEnabled global Boolean visaRequired { get; set; }
         @AuraEnabled global String blockReason { get; set; }
         @AuraEnabled global String visaStatus { get; set; }
         @AuraEnabled global String requirements { get; set; }
@@ -61,3 +60,4 @@ global with sharing class VisaWrapper {
         public List<String> sources = new List<String>();
     }
 }
+
