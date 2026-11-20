@@ -1,0 +1,17 @@
+<template>
+    <lightning-button
+        label="Submit for Approval"
+        variant="brand"
+        icon-name="utility:approval"
+        onclick={handleApproval}
+        disabled={isLoading}>
+    </lightning-button>
+
+    <template if:true={isLoading}>
+        <lightning-spinner
+            alternative-text="Submitting approval..."
+            size="small">
+        </lightning-spinner>
+    </template>
+</template>
+

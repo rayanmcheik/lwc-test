@@ -1,0 +1,8 @@
+{
+    "componentOverrides": {
+        "$": {
+            "definition": "c/vgtsProductCards"
+        }
+    }
+}
+

@@ -1,0 +1,73 @@
+<template>
+    <div class="slds-box slds-theme_default slds-m-top_medium">
+
+        <template if:true={isVisa}>
+            <h3 class="slds-text-heading_small">
+                Visa Payment
+            </h3>
+
+            <div class="slds-notify slds-notify_alert
+                        slds-alert_info slds-m-top_small">
+                Payment will be processed through a secure
+                payment gateway once configured.
+            </div>
+        </template>
+
+        <template if:true={isBankTransfer}>
+            <h3 class="slds-text-heading_small slds-m-bottom_medium">
+                Bank Transfer Details
+            </h3>
+
+            <lightning-input
+                label="Bank Name"
+                data-field="bankName"
+                required
+                onchange={handleChange}>
+            </lightning-input>
+
+            <lightning-input
+                label="Transfer Reference"
+                data-field="transferReference"
+                required
+                onchange={handleChange}>
+            </lightning-input>
+
+            <lightning-input
+                type="date"
+                label="Transfer Date"
+                data-field="transferDate"
+                required
+                onchange={handleChange}>
+            </lightning-input>
+        </template>
+
+        <template if:true={isOnlinePayment}>
+            <h3 class="slds-text-heading_small slds-m-bottom_medium">
+                Online Payment Details
+            </h3>
+
+            <lightning-input
+                label="Payment Provider"
+                data-field="provider"
+                required
+                onchange={handleChange}>
+            </lightning-input>
+
+            <lightning-input
+                label="Transaction Reference"
+                data-field="transactionReference"
+                required
+                onchange={handleChange}>
+            </lightning-input>
+
+            <lightning-input
+                type="date"
+                label="Transaction Date"
+                data-field="transactionDate"
+                required
+                onchange={handleChange}>
+            </lightning-input>
+        </template>
+
+    </div>
+</template>

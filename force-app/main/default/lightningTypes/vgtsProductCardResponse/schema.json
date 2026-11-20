@@ -1,0 +1,5 @@
+{
+    "title": "VGTS Product Card Response",
+    "description": "VGTS travel products returned from Salesforce.",
+    "lightning:type": "@apexClassType/c__VGTSProductCardResponse"
+}

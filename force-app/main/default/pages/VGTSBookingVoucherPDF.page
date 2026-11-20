@@ -1,0 +1,634 @@
+
+<apex:page
+    standardController="Opportunity"
+    extensions="VGTSBookingVoucherController"
+    renderAs="pdf"
+    action="{!prepare}"
+    showHeader="false"
+    sidebar="false"
+    applyHtmlTag="false"
+    applyBodyTag="false">
+
+<html>
+<head>
+    <style type="text/css">
+
+        @page {
+            size: A4;
+            margin: 22px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #263238;
+        }
+
+        .header {
+            background-color: #123456;
+            color: white;
+            padding: 22px;
+            text-align: center;
+        }
+
+        .brand {
+            font-size: 29px;
+            font-weight: bold;
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            margin-top: 8px;
+        }
+
+        .section-title {
+            background-color: #e8eff5;
+            color: #123456;
+            padding: 9px;
+            margin-top: 18px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .booking-table,
+        .service-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .booking-table td,
+        .service-table td {
+            border: 1px solid #d8dfe5;
+            padding: 8px;
+        }
+
+        .service-table th {
+            background-color: #123456;
+            color: white;
+            text-align: left;
+            padding: 9px;
+        }
+
+        .service-details {
+            width: 75%;
+        }
+
+        .qr-column {
+            width: 25%;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .qr-image {
+            width: 110px;
+            height: 110px;
+        }
+
+        .status-paid {
+            background-color: #e0f2e5;
+            color: #176b36;
+            padding: 8px 15px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background-color: #fff1d6;
+            color: #8a5a00;
+            padding: 8px 15px;
+            font-weight: bold;
+        }
+
+        .notice {
+            background-color: #e8eff5;
+            color: #123456;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .error {
+            background-color: #fde8e7;
+            color: #a32118;
+            padding: 10px;
+            margin-top: 12px;
+        }
+
+        .total-panel {
+            background-color: #e8eff5;
+            padding: 13px;
+            margin-top: 15px;
+            text-align: right;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            border-top: 1px solid #d8dfe5;
+            padding-top: 15px;
+            margin-top: 25px;
+            color: #666666;
+        }
+
+        .small-text {
+            font-size: 9px;
+            color: #666666;
+        }
+
+        .service-reference {
+            color: #123456;
+            font-size: 9px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<!-- ====================================== -->
+<!-- VGTS HEADER -->
+<!-- ====================================== -->
+
+<div class="header">
+
+    <div class="brand">VGTS</div>
+
+    <div class="subtitle">
+        BOOKING SUMMARY VOUCHER
+    </div>
+
+    <div style="margin-top:8px;">
+        TRAVEL SERVICES CONFIRMATION DOCUMENT
+    </div>
+
+</div>
+
+
+<!-- ====================================== -->
+<!-- BOOKING INFORMATION -->
+<!-- ====================================== -->
+
+<div class="section-title">
+    BOOKING INFORMATION
+</div>
+
+<table class="booking-table">
+
+    <tr>
+        <td><b>Booking Name</b></td>
+        <td>{!bookingInfo.Name}</td>
+
+        <td><b>Booking Number</b></td>
+        <td>{!bookingInfo.Booking_Number__c}</td>
+    </tr>
+
+    <tr>
+        <td><b>Customer</b></td>
+        <td>{!bookingInfo.Account.Name}</td>
+
+        <td><b>Traveler</b></td>
+        <td>{!bookingInfo.Traveler__r.Name}</td>
+    </tr>
+
+    <tr>
+        <td><b>Traveler Email</b></td>
+        <td>{!bookingInfo.Traveler__r.Email}</td>
+
+        <td><b>Currency</b></td>
+        <td>{!currencyCode}</td>
+    </tr>
+
+    <tr>
+        <td><b>Departure Date</b></td>
+        <td>
+            <apex:outputText value="{0,date,dd/MM/yyyy}">
+                <apex:param value="{!bookingInfo.Departure_Date__c}"/>
+            </apex:outputText>
+        </td>
+
+        <td><b>Return Date</b></td>
+        <td>
+            <apex:outputText value="{0,date,dd/MM/yyyy}">
+                <apex:param value="{!bookingInfo.Return_Date__c}"/>
+            </apex:outputText>
+        </td>
+    </tr>
+
+</table>
+
+<!-- ====================================== -->
+<!-- PAYMENT SUMMARY -->
+<!-- ====================================== -->
+
+<div class="section-title">
+    PAYMENT SUMMARY
+</div>
+
+<table class="booking-table">
+
+    <tr>
+        <td><b>Total Travel Package</b></td>
+        <td>{!currencyCode} {!packageTotal}</td>
+    </tr>
+
+    <tr>
+        <td><b>Total Completed Payments</b></td>
+        <td>{!currencyCode} {!totalPaid}</td>
+    </tr>
+
+    <tr>
+        <td><b>Remaining Balance</b></td>
+        <td>{!currencyCode} {!remainingBalance}</td>
+    </tr>
+
+</table>
+
+<div class="notice">
+    Your saved Travel Package and service QR references are displayed below.
+</div>
+
+<!-- ====================================== -->
+<!-- AIR TICKETS -->
+<!-- ====================================== -->
+
+<apex:outputPanel rendered="{!hasAirTickets}">
+
+    <div class="section-title">
+        AIR TICKETS
+    </div>
+
+    <apex:repeat value="{!airTicketVouchers}" var="item">
+
+        <table class="service-table">
+
+            <tr>
+                <th colspan="2">
+                    FLIGHT: {!item.serviceName}
+                </th>
+            </tr>
+
+            <tr>
+
+                <td class="service-details">
+
+                    <b>Product Code:</b>
+                    {!item.productCode}
+                    <br/><br/>
+
+                    <b>Origin:</b>
+                    {!item.departure}
+                    <br/><br/>
+
+                    <b>Arrival Airport:</b>
+                    {!item.arrivalAirport}
+                    <br/><br/>
+
+                    <b>Destination:</b>
+                    {!item.destination}
+                    <br/><br/>
+
+                    <b>Flight Type:</b>
+                    {!item.flightType}
+                    <br/><br/>
+
+                    <b>Cabin Class:</b>
+                    {!item.cabinClass}
+                    <br/><br/>
+
+                    <b>Supplier:</b>
+                    {!item.supplier}
+                    <br/><br/>
+
+                    <b>Departure Date:</b>
+                    {!item.departureDate}
+                    <br/><br/>
+
+                    <b>Return Date:</b>
+                    {!item.returnDate}
+                    <br/><br/>
+
+                    <b>Quantity:</b>
+                    {!item.quantity}
+
+                </td>
+
+                <td class="qr-column">
+
+                    <apex:outputPanel
+                        rendered="{!NOT(ISBLANK(item.qrUrl))}">
+
+                        <apex:image
+                            value="{!item.qrUrl}"
+                            styleClass="qr-image"/>
+
+                        <p class="small-text">
+                            Flight Voucher QR Code
+                        </p>
+
+                    </apex:outputPanel>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </apex:repeat>
+
+</apex:outputPanel>
+
+<!-- ====================================== -->
+<!-- HOTELS -->
+<!-- ====================================== -->
+
+<apex:outputPanel rendered="{!hasHotels}">
+
+    <div class="section-title">
+        HOTEL CONFIRMATION DETAILS
+    </div>
+
+    <apex:repeat value="{!hotelVouchers}" var="item">
+
+        <table class="service-table">
+
+            <tr>
+                <th colspan="2">
+                    HOTEL: {!item.serviceName}
+                </th>
+            </tr>
+
+            <tr>
+
+                <td class="service-details">
+
+                    <b>Product Code:</b>
+                    {!item.productCode}
+                    <br/><br/>
+
+                    <b>Destination:</b>
+                    {!item.destination}
+                    <br/><br/>
+
+                    <b>Supplier:</b>
+                    {!item.supplier}
+                    <br/><br/>
+
+                    <b>Number of Rooms:</b>
+                    {!item.rooms}
+                    <br/><br/>
+
+                    <b>Number of Nights:</b>
+                    {!item.nights}
+                    <br/><br/>
+
+                    <b>Quantity:</b>
+                    {!item.quantity}
+                    <br/><br/>
+
+                    <b>Check-in Date:</b>
+                    {!item.departureDate}
+                    <br/><br/>
+
+                    <b>Check-out Date:</b>
+                    {!item.returnDate}
+                    <br/><br/>
+
+                    <b>Description:</b>
+                    {!item.description}
+
+                </td>
+
+                <td class="qr-column">
+
+                    <apex:outputPanel
+                        rendered="{!NOT(ISBLANK(item.qrUrl))}">
+
+                        <apex:image
+                            value="{!item.qrUrl}"
+                            styleClass="qr-image"/>
+
+                        <p class="small-text">
+                            Hotel Voucher QR
+                        </p>
+
+                    </apex:outputPanel>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </apex:repeat>
+
+</apex:outputPanel>
+
+<!-- ====================================== -->
+<!-- GROUND TRANSFERS -->
+<!-- ====================================== -->
+
+<apex:outputPanel rendered="{!hasTransfers}">
+
+    <div class="section-title">
+        GROUND TRANSFER DETAILS
+    </div>
+
+    <apex:repeat value="{!transferVouchers}" var="item">
+
+        <table class="service-table">
+
+            <tr>
+                <th colspan="2">
+                    TRANSFER: {!item.serviceName}
+                </th>
+            </tr>
+
+            <tr>
+
+                <td class="service-details">
+
+                    <b>Product Code:</b>
+                    {!item.productCode}
+                    <br/><br/>
+
+                    <b>Destination:</b>
+                    {!item.destination}
+                    <br/><br/>
+
+                    <b>Supplier:</b>
+                    {!item.supplier}
+                    <br/><br/>
+
+                    <b>Transfer From:</b>
+                    {!item.departure}
+                    <br/><br/>
+
+                    <b>Arrival Airport:</b>
+                    {!item.arrivalAirport}
+                    <br/><br/>
+
+                    <b>Departure Date:</b>
+                    {!item.departureDate}
+                    <br/><br/>
+
+                    <b>Quantity:</b>
+                    {!item.quantity}
+                    <br/><br/>
+
+                    <b>Description:</b>
+                    {!item.description}
+
+                </td>
+
+                <td class="qr-column">
+
+                    <apex:outputPanel
+                        rendered="{!NOT(ISBLANK(item.qrUrl))}">
+
+                        <apex:image
+                            value="{!item.qrUrl}"
+                            styleClass="qr-image"/>
+
+                        <p class="small-text">
+                            Transfer Voucher QR
+                        </p>
+
+                    </apex:outputPanel>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </apex:repeat>
+
+</apex:outputPanel>
+
+<!-- ====================================== -->
+<!-- ANCILLARY SERVICES -->
+<!-- ====================================== -->
+
+<apex:outputPanel rendered="{!hasAncillaries}">
+
+    <div class="section-title">
+        ADDITIONAL TRAVEL SERVICES
+    </div>
+
+    <apex:repeat value="{!ancillaryVouchers}" var="item">
+
+        <table class="service-table">
+
+            <tr>
+                <th colspan="2">
+                    SERVICE: {!item.serviceName}
+                </th>
+            </tr>
+
+            <tr>
+
+                <td class="service-details">
+
+                    <b>Product Code:</b>
+                    {!item.productCode}
+                    <br/><br/>
+
+                    <b>Destination:</b>
+                    {!item.destination}
+                    <br/><br/>
+
+                    <b>Supplier:</b>
+                    {!item.supplier}
+                    <br/><br/>
+
+                    <b>Quantity:</b>
+                    {!item.quantity}
+                    <br/><br/>
+
+                    <b>Description:</b>
+                    {!item.description}
+
+                </td>
+
+                <td class="qr-column">
+
+                    <apex:outputPanel
+                        rendered="{!NOT(ISBLANK(item.qrUrl))}">
+
+                        <apex:image
+                            value="{!item.qrUrl}"
+                            styleClass="qr-image"/>
+
+                        <p class="small-text">
+                            Service QR Code
+                        </p>
+
+                    </apex:outputPanel>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </apex:repeat>
+
+</apex:outputPanel>
+
+<!-- ====================================== -->
+<!-- QR ERROR -->
+<!-- ====================================== -->
+
+<apex:outputPanel rendered="{!NOT(ISBLANK(qrErrorMessage))}">
+
+    <div class="error">
+        {!qrErrorMessage}
+    </div>
+
+</apex:outputPanel>
+
+<!-- ====================================== -->
+<!-- PACKAGE TOTAL -->
+<!-- ====================================== -->
+
+<div class="total-panel">
+
+    TOTAL TRAVEL PACKAGE:
+
+    {!currencyCode} {!packageTotal}
+
+</div>
+
+<!-- ====================================== -->
+<!-- FOOTER -->
+<!-- ====================================== -->
+
+<div class="footer">
+
+    <b>VGTS TRAVEL TEAM</b>
+
+    <br/><br/>
+
+    Thank you for choosing VGTS.
+
+    <br/><br/>
+
+    Please present the relevant service voucher to the
+    supplier when required.
+
+    <br/><br/>
+
+    <span class="small-text">
+        QR codes identify the booked services and Booking references.
+        They do not replace supplier-issued reservation confirmations.
+    </span>
+
+</div>
+
+</body>
+</html>
+
+</apex:page>
+
+

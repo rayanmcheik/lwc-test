@@ -537,18 +537,28 @@ public with sharing class VGTSBookingPackageController {
     // PAYMENT
     // =====================================================
 
-    @AuraEnabled
-    public static Id savePayment(
-        Id bookingId,
-        String method,
-        Date paymentDate
-    ) {
 
-        if (bookingId == null || String.isBlank(method)) {
-            throw new AuraHandledException(
-                'Booking and payment method are required.'
-            );
-        }
+@AuraEnabled
+public static Id savePayment(
+    Id bookingId,
+    String method,
+    Date paymentDate,
+    String paymentDetailsJson
+) {
+
+    if (bookingId == null) {
+        throw new AuraHandledException(
+            'Booking ID is required.'
+        );
+    }
+
+    if (String.isBlank(method)) {
+        throw new AuraHandledException(
+            'Select a payment method.'
+        );
+    }
+
+    try {
 
         List<OpportunityLineItem> lines = [
             SELECT Quantity, UnitPrice
@@ -559,119 +569,172 @@ public with sharing class VGTSBookingPackageController {
 
         if (lines.isEmpty()) {
             throw new AuraHandledException(
-                'Save the Travel Package first.'
+                'Save at least one Travel Package product first.'
             );
         }
 
-        Decimal total = 0;
+        Decimal amount = 0;
 
         for (OpportunityLineItem line : lines) {
-            total += line.Quantity * line.UnitPrice;
+            amount += line.Quantity * line.UnitPrice;
         }
 
-        if (total <= 0) {
-            throw new AuraHandledException('Invalid payment amount.');
+        if (amount <= 0) {
+            throw new AuraHandledException(
+                'Invalid payment amount.'
+            );
         }
 
-        Payment__c payment = new Payment__c(
-            Booking__c = bookingId,
-            Amount__c = total,
-            Method__c = method,
-            Payment_Date__c = paymentDate == null
-                ? Date.today() : paymentDate,
-            Status__c = 'Pending'
+        Map<String, Schema.SObjectField> fields =
+            Schema.SObjectType.Payment__c.fields.getMap();
+
+        if (!fields.containsKey('Booking__c')) {
+            throw new AuraHandledException(
+                'Payment__c.Booking__c is missing. Check the Booking lookup field.'
+            );
+        }
+Opportunity booking = [
+    SELECT Id, Departure_Date__c
+    FROM Opportunity
+    WHERE Id = :bookingId
+    LIMIT 1
+];
+
+if (booking.Departure_Date__c == null) {
+    throw new AuraHandledException(
+        'Departure Date is required.'
+    );
+}
+
+Integer daysRemaining =
+    Date.today().daysBetween(booking.Departure_Date__c);
+
+if (daysRemaining <= 45) {
+    throw new AuraHandledException(
+        'Installment payment is unavailable because departure is within 45 days.'
+    );
+}
+
+        Payment__c paymentRecord = new Payment__c();
+
+        paymentRecord.put('Booking__c', bookingId);
+        paymentRecord.put('Amount__c', amount);
+        paymentRecord.put('Method__c', method);
+        paymentRecord.put(
+            'Payment_Date__c',
+            paymentDate == null ? Date.today() : paymentDate
         );
+        paymentRecord.put('Status__c', 'Pending');
 
-        insert payment;
+        insert paymentRecord;
 
-        return payment.Id;
+        return paymentRecord.Id;
+
+    } catch (AuraHandledException ex) {
+
+        throw ex;
+
+    } catch (Exception ex) {
+
+        throw new AuraHandledException(
+            'Payment creation failed: ' + ex.getMessage()
+        );
     }
+}
+
+
 
     // =====================================================
     // QUOTE
     // =====================================================
 
-    @AuraEnabled
-    public static Id createBookingQuote(Id bookingId) {
+@AuraEnabled
+public static Id createBookingQuote(Id bookingId) {
 
-        if (bookingId == null) {
-            throw new AuraHandledException('Booking ID is required.');
-        }
-
-        String blockReason =
-            VisaChecklistController.getQuoteBlockReason(bookingId);
-
-        if (!String.isBlank(blockReason)) {
-            throw new AuraHandledException(
-                'Quote creation blocked: ' + blockReason
-            );
-        }
-
-        Opportunity booking = [
-            SELECT Id, Name, Pricebook2Id
-            FROM Opportunity
-            WHERE Id = :bookingId
-            LIMIT 1
-            FOR UPDATE
-        ];
-
-        if (booking.Pricebook2Id == null) {
-            throw new AuraHandledException(
-                'Assign a Price Book first.'
-            );
-        }
-
-        List<OpportunityLineItem> lines = [
-            SELECT Id, PricebookEntryId, Quantity, UnitPrice
-            FROM OpportunityLineItem
-            WHERE OpportunityId = :bookingId
-            AND Booking_Service__c = true
-        ];
-
-        if (lines.isEmpty()) {
-            throw new AuraHandledException(
-                'Save the Travel Package before creating a Quote.'
-            );
-        }
-
-        Integer quoteCount = [
-            SELECT COUNT()
-            FROM Quote
-            WHERE OpportunityId = :bookingId
-            AND Status != 'Rejected'
-        ];
-
-        if (quoteCount > 0) {
-            throw new AuraHandledException(
-                'An active Quote already exists.'
-            );
-        }
-
-        Quote quoteRecord = new Quote(
-            Name = 'Travel Quote - ' + booking.Name,
-            OpportunityId = booking.Id,
-            Pricebook2Id = booking.Pricebook2Id,
-            Status = 'Draft'
+    if (bookingId == null) {
+        throw new AuraHandledException(
+            'Booking ID is required.'
         );
-
-        insert quoteRecord;
-
-        List<QuoteLineItem> quoteLines =
-            new List<QuoteLineItem>();
-
-        for (OpportunityLineItem line : lines) {
-
-            quoteLines.add(new QuoteLineItem(
-                QuoteId = quoteRecord.Id,
-                PricebookEntryId = line.PricebookEntryId,
-                Quantity = line.Quantity,
-                UnitPrice = line.UnitPrice
-            ));
-        }
-
-        insert quoteLines;
-
-        return quoteRecord.Id;
     }
+
+    Opportunity booking = [
+        SELECT Id, Name, Pricebook2Id
+        FROM Opportunity
+        WHERE Id = :bookingId
+        LIMIT 1
+        FOR UPDATE
+    ];
+
+    if (booking.Pricebook2Id == null) {
+        throw new AuraHandledException(
+            'Assign a Price Book first.'
+        );
+    }
+
+    // Check saved Travel Package products.
+    List<OpportunityLineItem> lines = [
+        SELECT Id, PricebookEntryId, Quantity, UnitPrice
+        FROM OpportunityLineItem
+        WHERE OpportunityId = :bookingId
+        AND Booking_Service__c = true
+    ];
+
+    if (lines.isEmpty()) {
+        throw new AuraHandledException(
+            'Save the Travel Package first.'
+        );
+    }
+
+    // Check installment schedule.
+    List<Installment__c> installments = [
+        SELECT Id, Quote__c
+        FROM Installment__c
+        WHERE Booking__c = :bookingId
+        ORDER BY Installment_Number__c
+    ];
+
+    if (installments.size() != 3) {
+        throw new AuraHandledException(
+            'Create all three installments before creating the Quote.'
+        );
+    }
+
+    // Create the Quote record.
+    Quote quoteRecord = new Quote();
+
+    quoteRecord.Name = 'Travel Quote - ' + booking.Name;
+    quoteRecord.OpportunityId = booking.Id;
+    quoteRecord.Pricebook2Id = booking.Pricebook2Id;
+    quoteRecord.Status = 'Draft';
+
+    insert quoteRecord;
+
+    // Link installments to the newly created Quote.
+    for (Installment__c installment : installments) {
+        installment.Quote__c = quoteRecord.Id;
+    }
+
+    update installments;
+
+    // Create Quote Line Items.
+    List<QuoteLineItem> quoteLines =
+        new List<QuoteLineItem>();
+
+    for (OpportunityLineItem line : lines) {
+
+        quoteLines.add(new QuoteLineItem(
+            QuoteId = quoteRecord.Id,
+            PricebookEntryId = line.PricebookEntryId,
+            Quantity = line.Quantity,
+            UnitPrice = line.UnitPrice
+        ));
+    }
+
+    insert quoteLines;
+
+    return quoteRecord.Id;
+}
+
+
 }
 

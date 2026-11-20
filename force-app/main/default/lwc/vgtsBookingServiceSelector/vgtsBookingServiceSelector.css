@@ -765,3 +765,150 @@ lightning-tabset {
         flex-direction: column;
     }
 }
+
+.visa-section {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+}
+
+
+.visa-section .slds-notify_alert {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+}
+
+.visa-section .slds-alert_warning {
+    background-color: #fff8eb;
+    color: #8a6d3b;
+    border-color: #fce8b2;
+}
+
+.visa-section .slds-alert_success {
+    background-color: #e6f4ea;
+    color: #137333;
+    border-color: #ceead6;
+}
+
+
+.visa-checklist-card {
+    background-color: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.visa-checklist-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.visa-checklist-card h3 {
+    font-weight: 700;
+    color: #1b1b1b;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    margin-right: 0.75rem;
+}
+
+.visa-checklist-card h4 {
+    color: #0070d2;
+    border-bottom: 1px dashed #dddbda;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.visa-checklist-card p {
+    margin-bottom: 0.35rem;
+    color: #3e3e3c;
+    font-size: 0.9rem;
+}
+
+
+.visa-checklist-card lightning-input,
+.visa-checklist-card lightning-combobox {
+    margin-bottom: 0.75rem;
+}
+
+.visa-checklist-card lightning-input[data-field*="Received"],
+.visa-checklist-card lightning-input[data-field*="Completed"] {
+    margin-bottom: 0.5rem;
+    display: block;
+    --lwc-squareIconUtilitySmall: 1.1rem;
+}
+
+
+.visa-section .slds-m-top_large {
+    border-top: 1px solid #f3f2f1;
+    padding-top: 1.25rem;
+}
+
+.visa-section .slds-text-color_error {
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+.visa-section p strong {
+    color: #1b1b1b;
+    display: inline-block;
+    min-width: 110px; /* Aligns values cleanly side-by-side */
+}
+
+/* Requirements Wrapper Container */
+.visa-section .slds-m-top_medium {
+    background-color: #f8f9fa;
+    border-left: 4px solid #0070d2; /* Distinct blue vertical accent line */
+    padding: 0.75rem 1rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.visa-section .slds-m-top_medium strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #0070d2;
+    font-size: 0.95rem;
+}
+
+/* Lightning Formatted Text Output Styling */
+.visa-section lightning-formatted-text {
+    display: block;
+    color: #3e3e3c;
+    line-height: 1.5;
+    font-size: 0.9rem;
+    white-space: pre-wrap; /* Maintains spacing/newlines from the API response */
+}
+
+/* ==========================================================================
+   Visa Free Cards Layout
+   ========================================================================== */
+.visa-checklist-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #081c3b;
+    margin: 0 0.5rem 0.5rem 0;
+    vertical-align: middle;
+}
+
+/* Align badge tightly next to the Country Title */
+.visa-checklist-card lightning-badge {
+    vertical-align: text-bottom;
+    margin-bottom: 0.5rem;
+    --sds-c-badge-color-background: #e6f4ea;
+    --sds-c-badge-text-color: #137333;
+    font-weight: 600;
+}
+
+/* Text fields inside the Visa Free card */
+.visa-checklist-card p:last-of-type {
+    margin-bottom: 0; /* Clears excess margin at the bottom of the card */
+    padding-top: 0.5rem;
+    border-top: 1px solid #f3f2f1; /* Subtly splits structural info from custom API notes */
+    margin-top: 0.5rem;
+}

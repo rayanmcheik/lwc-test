@@ -148,7 +148,7 @@
                                             </lightning-formatted-number>
                                         </p>
 
-                                        <div class="card-actions">
+                                        <div class="slds-col">
 
                                             <lightning-button
                                                 label="View Details"
@@ -912,23 +912,50 @@
 
                 <!-- PAYMENT -->
 
-                <div class="slds-m-top_large">
+               <div class="slds-m-top_large">
 
-                    <lightning-combobox
-                        label="Payment Method"
-                        value={paymentMethod}
-                        options={paymentMethodOptions}
-                        onchange={handlePaymentMethodChange}>
-                    </lightning-combobox>
+    <lightning-combobox
+        label="Payment Method"
+        value={paymentMethod}
+        options={paymentMethodOptions}
+        onchange={handlePaymentMethodChange}>
+    </lightning-combobox>
+<template if:true={showPaymentDetails}>
+    <c-payment-details
+        payment-method={paymentMethod}>
+    </c-payment-details>
+</template>
 
-                    <lightning-button
-                        label="Create Pending Payment"
-                        onclick={handleRecordPayment}
-                        disabled={isSaving}
-                        class="slds-m-top_small">
-                    </lightning-button>
+    <template if:true={showPaymentDetails}>
+        <c-payment-details
+            payment-method={paymentMethod}>
+        </c-payment-details>
+    </template>
 
-                </div>
+
+    <div class="slds-grid slds-wrap slds-m-top_medium">
+
+        <div class="slds-m-right_medium slds-m-bottom_small">
+            <lightning-button
+                label="Create Single Payment"
+                onclick={handleRecordPayment}
+                disabled={isSaving}>
+            </lightning-button>
+        </div>
+
+        <div class="slds-m-bottom_small">
+            <lightning-button
+                label="Create 3 Installments"
+                variant="brand"
+                onclick={handleCreateInstallments}
+                disabled={isSaving}>
+            </lightning-button>
+        </div>
+
+    </div>
+
+</div>
+
 
                 <!-- QUOTE -->
 

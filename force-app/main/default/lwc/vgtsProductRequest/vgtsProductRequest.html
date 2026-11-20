@@ -1,0 +1,35 @@
+
+<template>
+    <div class="request-card">
+
+        <h2>VGTS Product Catalog Request</h2>
+
+        <p>Enter the travel destination and customer email.</p>
+
+        <lightning-input
+            label="Destination"
+            value={destination}
+            onchange={handleDestination}
+            placeholder="Example: France"
+            required>
+        </lightning-input>
+
+        <lightning-input
+            type="email"
+            label="Customer Email"
+            value={customerEmail}
+            onchange={handleEmail}
+            placeholder="customer@example.com"
+            required>
+        </lightning-input>
+
+        <lightning-button
+            label="Submit Request"
+            variant="brand"
+            onclick={handleSubmit}
+            disabled={isInvalid}>
+        </lightning-button>
+
+    </div>
+</template>
+

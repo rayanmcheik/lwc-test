@@ -1,0 +1,100 @@
+
+<template>
+    <section class="vgts-container">
+
+        <div class="header">
+            <h2>VGTS Travel Options</h2>
+            <p>Available travel products for your destination</p>
+        </div>
+
+        <template if:true={hasProducts}>
+            <div class="products-grid">
+
+                <template for:each={products} for:item="product">
+
+                    <article key={product.productId}
+                             class="product-card">
+
+                        <div class="card-banner">
+                            <span>VGTS TRAVEL</span>
+                            <span>Travel Option</span>
+                        </div>
+
+                        <div class="card-content">
+
+                            <h3>{product.name}</h3>
+
+                            <div class="detail">
+                                <span>Product Code</span>
+                                <strong>{product.productCode}</strong>
+                            </div>
+
+                            <div class="detail">
+                                <span>Destination</span>
+                                <strong>{product.destination}</strong>
+                            </div>
+
+                            <template if:true={product.departure}>
+                                <div class="detail">
+                                    <span>Departure</span>
+                                    <strong>{product.departure}</strong>
+                                </div>
+                            </template>
+
+                            <template if:true={product.departureDate}>
+                                <div class="detail">
+                                    <span>Departure Date</span>
+                                    <strong>{product.departureDate}</strong>
+                                </div>
+                            </template>
+
+                            <template if:true={product.returnDate}>
+                                <div class="detail">
+                                    <span>Return Date</span>
+                                    <strong>{product.returnDate}</strong>
+                                </div>
+                            </template>
+
+                            <template if:true={product.flightType}>
+                                <div class="detail">
+                                    <span>Flight Type</span>
+                                    <strong>{product.flightType}</strong>
+                                </div>
+                            </template>
+
+                            <template if:true={product.sellingPrice}>
+                                <div class="price">
+                                    {product.sellingPrice}
+                                    {product.currencyCode}
+                                </div>
+                            </template>
+
+                            <template if:true={product.description}>
+                                <p class="description">
+                                    {product.description}
+                                </p>
+                            </template>
+
+                            <button
+                                class="whatsapp-button"
+                                data-id={product.productId}
+                                onclick={handleWhatsApp}>
+                                Contact VGTS on WhatsApp
+                            </button>
+
+                        </div>
+                    </article>
+
+                </template>
+            </div>
+        </template>
+
+        <template if:false={hasProducts}>
+            <div class="empty-message">
+                No matching VGTS travel products found.
+            </div>
+        </template>
+
+    </section>
+</template>
+

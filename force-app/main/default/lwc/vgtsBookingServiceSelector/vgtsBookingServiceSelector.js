@@ -1,8 +1,7 @@
-
 import { LightningElement, api, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-
+import createInstallmentSchedule from '@salesforce/apex/VGTSInstallmentController.createInstallmentSchedule';
 import getTravelPackages from '@salesforce/apex/VGTSBookingPackageController.getTravelPackages';
 import getBookingServices from '@salesforce/apex/VGTSBookingPackageController.getBookingServices';
 import saveBookingServices from '@salesforce/apex/VGTSBookingPackageController.saveBookingServices';
@@ -16,7 +15,7 @@ import saveVisaInformation from '@salesforce/apex/VisaChecklistController.saveVi
 
 const HOTEL_ROOM_FEE = 50;
 const HOTEL_NIGHT_FEE = 30;
-
+showPaymentDetails = false;
 export default class VgtsBookingServiceSelector extends LightningElement {
 
     @api recordId;
@@ -1152,66 +1151,124 @@ export default class VgtsBookingServiceSelector extends LightningElement {
 
     handlePaymentMethodChange(event) {
         this.paymentMethod = event.detail.value;
+        this.showPaymentDetails = !!this.paymentMethod;
     }
 
     async handleRecordPayment() {
 
-        if (this.isSaving) return;
+    if (this.isSaving) return;
 
-        if (!this.hasSavedAirTicket) {
-            this.showToast(
-                'Save Travel Package first',
-                'Save the Travel Package before payment.',
-                'warning'
-            );
-            return;
-        }
-
-        if (!this.paymentMethod) {
-            this.showToast(
-                'Payment method required',
-                'Select a payment method.',
-                'warning'
-            );
-            return;
-        }
-
-        this.isSaving = true;
-
-        try {
-
-            const paymentId = await savePayment({
-
-                bookingId: this.recordId,
-                method: this.paymentMethod,
-                paymentDate: new Date().toISOString().slice(0, 10)
-            });
-
-            this.paymentMethod = '';
-
-            this.showToast(
-                'Pending payment created',
-                `Payment ID: ${paymentId}. No card was charged.`,
-                'success'
-            );
-
-        } catch (error) {
-
-            this.showToast(
-                'Payment failed',
-                this.reduceError(error),
-                'error'
-            );
-
-        } finally {
-
-            this.isSaving = false;
-        }
+    if (!this.hasSavedAirTicket) {
+        this.showToast(
+            'Save Travel Package first',
+            'Save the Travel Package before payment.',
+            'warning'
+        );
+        return;
     }
+
+    if (!this.paymentMethod) {
+        this.showToast(
+            'Payment method required',
+            'Select a payment method.',
+            'warning'
+        );
+        return;
+    }
+
+    const paymentComponent =
+        this.template.querySelector('c-payment-details');
+
+    if (!paymentComponent) return;
+
+    const details =
+        paymentComponent.validateAndGetDetails();
+
+    if (details === null) return;
+
+    // Do not create a fake successful Visa or online payment.
+    if (this.paymentMethod === 'Visa' ||
+        this.paymentMethod === 'Online Payment') {
+
+        this.showToast(
+            'Gateway not configured',
+            'Select and configure a payment gateway before processing this payment.',
+            'warning'
+        );
+        return;
+    }
+
+    this.isSaving = true;
+
+    try {
+
+        const paymentId = await savePayment({
+            bookingId: this.recordId,
+            method: this.paymentMethod,
+            paymentDate: new Date().toISOString().slice(0, 10),
+            paymentDetailsJson: JSON.stringify(details)
+        });
+
+        this.paymentMethod = '';
+        this.showPaymentDetails = false;
+
+        this.showToast(
+            'Pending payment created',
+            `Payment ID: ${paymentId}`,
+            'success'
+        );
+
+    } catch (error) {
+
+        this.showToast(
+            'Payment failed',
+            this.reduceError(error),
+            'error'
+        );
+
+    } finally {
+        this.isSaving = false;
+    }
+}
+
+
 
     // =====================================================
     // QUOTE
     // =====================================================
+
+async handleCreateInstallments() {
+
+    if (this.isSaving) return;
+
+    this.isSaving = true;
+
+    try {
+
+        const message = await createInstallmentSchedule({
+            bookingId: this.recordId
+        });
+
+        this.showToast(
+            'Installments created',
+            message,
+            'success'
+        );
+
+    } catch (error) {
+
+        this.showToast(
+            'Installment creation failed',
+            this.reduceError(error),
+            'error'
+        );
+
+    } finally {
+
+        this.isSaving = false;
+    }
+}
+
 
     async handleCreateQuote() {
 

@@ -1,8 +1,0 @@
-:host {
-    display: block;
-}
-
-lightning-input,
-lightning-combobox {
-    margin-bottom: 12px;
-}

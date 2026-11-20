@@ -1,0 +1,21 @@
+
+.request-card {
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid #dce3eb;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.request-card h2 {
+    color: #16446b;
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.request-card p {
+    color: #64748b;
+}
+
