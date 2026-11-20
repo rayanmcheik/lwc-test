@@ -12,13 +12,14 @@ import getVisaSummary from '@salesforce/apex/VisaChecklistController.getVisaSumm
 import getActiveVisaChecklists from '@salesforce/apex/VisaChecklistController.getActiveVisaChecklists';
 import checkVisaRequirements from '@salesforce/apex/VisaChecklistController.checkVisaRequirements';
 import saveVisaInformation from '@salesforce/apex/VisaChecklistController.saveVisaInformation';
+import getPaymentWorkflow from '@salesforce/apex/VGTSBookingPackageController.getPaymentWorkflow';
 
 const HOTEL_ROOM_FEE = 50;
 const HOTEL_NIGHT_FEE = 30;
-showPaymentDetails = false;
 export default class VgtsBookingServiceSelector extends LightningElement {
 
     @api recordId;
+   
 
     travelPackages = [];
     selectedServices = [];
@@ -72,12 +73,13 @@ export default class VgtsBookingServiceSelector extends LightningElement {
         { label: 'First Class', value: 'First Class' }
     ];
 
-    paymentMethodOptions = [
-        { label: 'Cash', value: 'Cash' },
-        { label: 'Credit Card', value: 'Credit Card' },
-        { label: 'Bank Transfer', value: 'Bank Transfer' },
-        { label: 'Online Payment', value: 'Online Payment' }
-    ];
+paymentMethodOptions = [
+    { label: 'Cash', value: 'Cash' },
+    { label: 'Visa / Credit Card', value: 'Credit Card' },
+    { label: 'Bank Transfer', value: 'Bank Transfer' },
+    { label: 'Online Payment', value: 'Online Payment' }
+];
+
 
     visaApplicationStatusOptions = [
         { label: 'Not Started', value: 'Not Started' },
@@ -87,6 +89,11 @@ export default class VgtsBookingServiceSelector extends LightningElement {
         { label: 'Submitted', value: 'Submitted' },
         { label: 'Rejected', value: 'Rejected' }
     ];
+    paymentStructureOptions = [
+        { label: 'Single Payment', value: 'Single' },
+        { label: '3 Installments', value: 'Installments' }
+    ];
+
 
     // =====================================================
     // LOAD PRODUCT CATALOGUE
@@ -1148,20 +1155,75 @@ export default class VgtsBookingServiceSelector extends LightningElement {
     // =====================================================
     // PAYMENT
     // =====================================================
+showPaymentDetails = false;
+paymentCreated = false;
+paymentId = null;
+
+installmentsCreated = false;
+quoteCreated = false;
+showPaymentDetails = false;
+paymentStructure = 'Single';
+
+handlePaymentStructureChange(event) {
+    this.paymentStructure = event.detail.value;
+    this.installmentRequired = this.paymentStructure === 'Installments';
+}
+get paymentButtonDisabled() {
+    return this.isSaving ||
+        this.paymentCreated ||
+        !this.hasSavedAirTicket ||
+        this.hasUnsavedChanges;
+}
+
+get installmentButtonDisabled() {
+    return this.isSaving ||
+        !this.paymentCreated ||
+        this.installmentsCreated;
+}
+
+get createQuoteDisabled() {
+    return this.isSaving ||
+        !this.paymentCreated ||
+        this.quoteCreated ||
+        this.quoteButtonDisabled;
+}
 
     handlePaymentMethodChange(event) {
         this.paymentMethod = event.detail.value;
         this.showPaymentDetails = !!this.paymentMethod;
     }
+@wire(getPaymentWorkflow, { bookingId: '$recordId' })
+wiredPaymentWorkflow({ data, error }) {
 
-    async handleRecordPayment() {
+    if (data) {
+
+        this.paymentId = data.paymentId;
+
+        this.paymentCreated = data.paymentCreated;
+
+        this.installmentsCreated =
+            data.installmentsCreated;
+
+        this.paymentMethod = data.paymentMethod || '';
+
+    } else if (error) {
+
+        this.showToast(
+            'Payment information failed',
+            this.reduceError(error),
+            'error'
+        );
+    }
+}
+
+ async handleRecordPayment() {
 
     if (this.isSaving) return;
 
-    if (!this.hasSavedAirTicket) {
+    if (!this.hasSavedAirTicket || this.hasUnsavedChanges) {
         this.showToast(
             'Save Travel Package first',
-            'Save the Travel Package before payment.',
+            'Save your Travel Package before creating payment.',
             'warning'
         );
         return;
@@ -1186,13 +1248,61 @@ export default class VgtsBookingServiceSelector extends LightningElement {
 
     if (details === null) return;
 
-    // Do not create a fake successful Visa or online payment.
-    if (this.paymentMethod === 'Visa' ||
-        this.paymentMethod === 'Online Payment') {
+ 
+
+    this.isSaving = true;
+
+    try {
+
+        const createdPaymentId = await savePayment({
+
+            bookingId: this.recordId,
+            method: this.paymentMethod,
+            paymentDate: new Date().toISOString().slice(0, 10),
+            paymentDetailsJson: JSON.stringify(details)
+
+        });
+
+        this.paymentId = createdPaymentId;
+        this.paymentCreated = true;
+
+        this.paymentMethod = '';
+        this.showPaymentDetails = false;
 
         this.showToast(
-            'Gateway not configured',
-            'Select and configure a payment gateway before processing this payment.',
+            'Payment created',
+            `Pending Payment ID: ${createdPaymentId}`,
+            'success'
+        );
+
+    } catch (error) {
+
+        this.showToast(
+            'Payment creation failed',
+            this.reduceError(error),
+            'error'
+        );
+
+    } finally {
+
+        this.isSaving = false;
+    }
+}
+
+
+
+    // =====================================================
+    // Installments
+    // =====================================================
+
+async handleCreateInstallments() {
+
+    if (this.isSaving) return;
+
+    if (!this.paymentCreated || !this.paymentId) {
+        this.showToast(
+            'Payment required',
+            'Create a payment before creating installments.',
             'warning'
         );
         return;
@@ -1202,52 +1312,14 @@ export default class VgtsBookingServiceSelector extends LightningElement {
 
     try {
 
-        const paymentId = await savePayment({
-            bookingId: this.recordId,
-            method: this.paymentMethod,
-            paymentDate: new Date().toISOString().slice(0, 10),
-            paymentDetailsJson: JSON.stringify(details)
-        });
-
-        this.paymentMethod = '';
-        this.showPaymentDetails = false;
-
-        this.showToast(
-            'Pending payment created',
-            `Payment ID: ${paymentId}`,
-            'success'
-        );
-
-    } catch (error) {
-
-        this.showToast(
-            'Payment failed',
-            this.reduceError(error),
-            'error'
-        );
-
-    } finally {
-        this.isSaving = false;
-    }
-}
-
-
-
-    // =====================================================
-    // QUOTE
-    // =====================================================
-
-async handleCreateInstallments() {
-
-    if (this.isSaving) return;
-
-    this.isSaving = true;
-
-    try {
-
         const message = await createInstallmentSchedule({
-            bookingId: this.recordId
+
+            bookingId: this.recordId,
+            paymentId: this.paymentId
+
         });
+
+        this.installmentsCreated = true;
 
         this.showToast(
             'Installments created',
@@ -1270,46 +1342,74 @@ async handleCreateInstallments() {
 }
 
 
-    async handleCreateQuote() {
+    // =====================================================
+    // QUOTE
+    // =====================================================
 
-        if (this.quoteButtonDisabled) {
 
-            this.showToast(
-                'Quote blocked',
-                this.quoteBlockReason,
-                'warning'
-            );
-            return;
-        }
+   async handleCreateQuote() {
 
-        this.isSaving = true;
+    if (this.isSaving) return;
 
-        try {
-
-            const quoteId = await createBookingQuote({
-
-                bookingId: this.recordId
-            });
-
-            this.showToast(
-                'Quote created',
-                `Quote ID: ${quoteId}`,
-                'success'
-            );
-
-        } catch (error) {
-
-            this.showToast(
-                'Quote creation failed',
-                this.reduceError(error),
-                'error'
-            );
-
-        } finally {
-
-            this.isSaving = false;
-        }
+    if (!this.paymentCreated || !this.paymentId) {
+        this.showToast(
+            'Payment required',
+            'Create the Payment before creating the Quote.',
+            'warning'
+        );
+        return;
     }
+
+    if (this.installmentRequired && !this.installmentsCreated) {
+        this.showToast(
+            'Installments required',
+            'Create all three installments before creating the Quote.',
+            'warning'
+        );
+        return;
+    }
+
+    if (this.quoteButtonDisabled) {
+        this.showToast(
+            'Quote blocked',
+            this.quoteBlockReason,
+            'warning'
+        );
+        return;
+    }
+
+    this.isSaving = true;
+
+    try {
+
+        const quoteId = await createBookingQuote({
+
+            bookingId: this.recordId,
+            paymentId: this.paymentId
+
+        });
+
+        this.quoteCreated = true;
+
+        this.showToast(
+            'Quote created',
+            `Quote ID: ${quoteId}`,
+            'success'
+        );
+
+    } catch (error) {
+
+        this.showToast(
+            'Quote creation failed',
+            this.reduceError(error),
+            'error'
+        );
+
+    } finally {
+
+        this.isSaving = false;
+    }
+}
 
     // =====================================================
     // TOAST AND ERROR

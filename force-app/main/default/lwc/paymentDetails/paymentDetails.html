@@ -1,73 +1,149 @@
+
 <template>
-    <div class="slds-box slds-theme_default slds-m-top_medium">
+    <div class="payment-details-container">
 
         <template if:true={isVisa}>
-            <h3 class="slds-text-heading_small">
-                Visa Payment
+
+            <h3 class="slds-text-heading_medium slds-m-bottom_medium">
+                Credit Card Information
             </h3>
 
-            <div class="slds-notify slds-notify_alert
-                        slds-alert_info slds-m-top_small">
-                Payment will be processed through a secure
-                payment gateway once configured.
+            <!-- INTERACTIVE VISA CARD -->
+            <div class="credit-card">
+
+                <div class="card-top">
+                    <span class="card-chip"></span>
+                    <span class="card-brand">VISA</span>
+                </div>
+
+                <!-- CARD NUMBER INPUT -->
+                <div class="card-number-area">
+                    <label> CARD NUMBER </label>
+                    <input
+                        type="text"
+                        class="card-number-input"
+                        placeholder="0000 0000 0000 0000"
+                        value={cardNumber}
+                        maxlength="19"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        oninput={handleCardNumber}>
+                </div>
+
+                <div class="card-bottom">
+
+                    <!-- CARDHOLDER -->
+                    <div class="card-holder-area">
+                        <label>CARDHOLDER</label>
+                        <input
+                            type="text"
+                            class="card-holder-input"
+                            placeholder="YOUR NAME"
+                            value={cardholderName}
+                            maxlength="26"
+                            autocomplete="off"
+                            oninput={handleCardholder}>
+                    </div>
+
+                    <!-- EXPIRY -->
+                    <div class="card-expiry-area">
+                        <label>EXPIRES</label>
+                        <input
+                            type="text"
+                            class="card-expiry-input"
+                            placeholder="MM/YY"
+                            value={expiryDate}
+                            maxlength="5"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            oninput={handleExpiry}>
+                    </div>
+
+                </div>
+
             </div>
+
+            <!-- CVV -->
+            <div class="cvv-container">
+
+                <lightning-input
+                    type="password"
+                    label="CVV"
+                    value={cvv}
+                    maxlength="4"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    onchange={handleCvv}
+                    message-when-value-missing="Enter CVV">
+                </lightning-input>
+
+            
+            </div>
+
         </template>
 
+        <!-- BANK TRANSFER -->
         <template if:true={isBankTransfer}>
-            <h3 class="slds-text-heading_small slds-m-bottom_medium">
+
+            <h3 class="slds-text-heading_medium slds-m-bottom_medium">
                 Bank Transfer Details
             </h3>
 
             <lightning-input
                 label="Bank Name"
                 data-field="bankName"
-                required
-                onchange={handleChange}>
+                onchange={handleChange}
+                required>
             </lightning-input>
 
             <lightning-input
                 label="Transfer Reference"
                 data-field="transferReference"
-                required
-                onchange={handleChange}>
+                onchange={handleChange}
+                required>
             </lightning-input>
 
             <lightning-input
                 type="date"
                 label="Transfer Date"
                 data-field="transferDate"
-                required
-                onchange={handleChange}>
+                onchange={handleChange}
+                required>
             </lightning-input>
+
         </template>
 
+        <!-- ONLINE PAYMENT -->
         <template if:true={isOnlinePayment}>
-            <h3 class="slds-text-heading_small slds-m-bottom_medium">
+
+            <h3 class="slds-text-heading_medium slds-m-bottom_medium">
                 Online Payment Details
             </h3>
 
             <lightning-input
                 label="Payment Provider"
                 data-field="provider"
-                required
-                onchange={handleChange}>
+                onchange={handleChange}
+                required>
             </lightning-input>
 
             <lightning-input
                 label="Transaction Reference"
                 data-field="transactionReference"
-                required
-                onchange={handleChange}>
+                onchange={handleChange}
+                required>
             </lightning-input>
 
             <lightning-input
                 type="date"
                 label="Transaction Date"
                 data-field="transactionDate"
-                required
-                onchange={handleChange}>
+                onchange={handleChange}
+                required>
             </lightning-input>
+
         </template>
 
     </div>
 </template>
+

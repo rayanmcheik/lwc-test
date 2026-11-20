@@ -912,19 +912,21 @@
 
                 <!-- PAYMENT -->
 
-               <div class="slds-m-top_large">
+<!-- PAYMENT SECTION -->
+
+<div class="payment-panel slds-m-top_large">
+
+    <h2 class="slds-text-heading_medium">
+        Payment Information
+    </h2>
 
     <lightning-combobox
         label="Payment Method"
         value={paymentMethod}
         options={paymentMethodOptions}
-        onchange={handlePaymentMethodChange}>
+        onchange={handlePaymentMethodChange}
+        disabled={paymentCreated}>
     </lightning-combobox>
-<template if:true={showPaymentDetails}>
-    <c-payment-details
-        payment-method={paymentMethod}>
-    </c-payment-details>
-</template>
 
     <template if:true={showPaymentDetails}>
         <c-payment-details
@@ -932,29 +934,49 @@
         </c-payment-details>
     </template>
 
+    <div class="payment-actions slds-m-top_large">
 
-    <div class="slds-grid slds-wrap slds-m-top_medium">
+        <lightning-button
+            label="Create Single Payment"
+            variant="brand"
+            onclick={handleRecordPayment}
+            disabled={paymentButtonDisabled}>
+        </lightning-button>
 
-        <div class="slds-m-right_medium slds-m-bottom_small">
-            <lightning-button
-                label="Create Single Payment"
-                onclick={handleRecordPayment}
-                disabled={isSaving}>
-            </lightning-button>
+    </div>
+
+    <template if:true={paymentCreated}>
+
+        <div class="slds-notify slds-notify_alert
+                    slds-alert_success slds-m-top_medium">
+            Payment created successfully.
+            Payment ID: {paymentId}
         </div>
 
-        <div class="slds-m-bottom_small">
+        <lightning-radio-group
+            label="Payment Structure"
+            options={paymentStructureOptions}
+            value={paymentStructure}
+            onchange={handlePaymentStructureChange}
+            type="radio">
+        </lightning-radio-group>
+
+        <template if:true={installmentRequired}>
+
             <lightning-button
                 label="Create 3 Installments"
                 variant="brand"
                 onclick={handleCreateInstallments}
-                disabled={isSaving}>
+                disabled={installmentButtonDisabled}
+                class="slds-m-top_medium">
             </lightning-button>
-        </div>
 
-    </div>
+        </template>
+
+    </template>
 
 </div>
+
 
 
                 <!-- QUOTE -->
@@ -965,8 +987,9 @@
                         variant="brand"
                         label="Create Quote"
                         onclick={handleCreateQuote}
-                        disabled={quoteButtonDisabled}>
+                        disabled={createQuoteDisabled}>
                     </lightning-button>
+
 
                     <template lwc:if={quoteButtonDisabled}>
 

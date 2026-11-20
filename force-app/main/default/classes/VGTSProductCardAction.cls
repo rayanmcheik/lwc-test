@@ -1,4 +1,3 @@
-
 public with sharing class VGTSProductCardAction {
 
     public class Request {

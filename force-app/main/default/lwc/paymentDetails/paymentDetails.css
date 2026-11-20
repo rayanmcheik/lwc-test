@@ -1,0 +1,194 @@
+
+:host {
+    display: block;
+}
+
+.payment-details-container {
+    margin-top: 22px;
+    padding: 22px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+/* VISA CARD */
+
+.credit-card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    min-height: 260px;
+    margin: 25px auto;
+    padding: 25px;
+    border-radius: 19px;
+    overflow: hidden;
+    color: white;
+
+    background:
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(90, 140, 220, 0.5),
+            transparent 40%
+        ),
+        linear-gradient(
+            135deg,
+            #0b1e3c,
+            #163d70,
+            #07172f
+        );
+
+    box-shadow: 0 15px 30px rgba(15, 35, 65, 0.25);
+}
+
+.credit-card::after {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    right: -90px;
+    bottom: -130px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    box-shadow: 0 0 0 25px rgba(255,255,255,0.04);
+    pointer-events: none;
+}
+
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.card-chip {
+    width: 43px;
+    height: 32px;
+    border-radius: 6px;
+
+    background: linear-gradient(
+        135deg,
+        #e8d39b,
+        #b99b55,
+        #f5e6bd
+    );
+}
+
+.card-brand {
+    font-size: 30px;
+    font-weight: 900;
+    font-style: italic;
+}
+
+/* INPUT LABELS */
+
+.credit-card label {
+    display: block;
+    margin-bottom: 5px;
+    color: #b8c9df;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+}
+
+/* CARD NUMBER */
+
+.card-number-area {
+    position: relative;
+    z-index: 1;
+    margin-top: 35px;
+}
+
+.card-number-input {
+    width: 100%;
+    padding: 5px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: white;
+    font-family: monospace;
+    font-size: 20px;
+    letter-spacing: 2px;
+}
+
+.card-number-input::placeholder {
+    color: rgba(255,255,255,0.65);
+}
+
+/* CARD BOTTOM */
+
+.card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 15px;
+    margin-top: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.card-holder-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-holder-input {
+    width: 100%;
+    padding: 5px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.card-holder-input::placeholder,
+.card-expiry-input::placeholder {
+    color: rgba(255,255,255,0.65);
+}
+
+.card-expiry-area {
+    width: 75px;
+    flex-shrink: 0;
+}
+
+.card-expiry-input {
+    width: 100%;
+    padding: 5px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: white;
+    font-size: 13px;
+}
+
+/* CVV */
+
+.cvv-container {
+    max-width: 460px;
+    margin: 20px auto;
+}
+
+.card-help-text {
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+@media (max-width: 480px) {
+
+    .credit-card {
+        min-height: 230px;
+        padding: 20px;
+    }
+
+    .card-number-input {
+        font-size: 16px;
+    }
+
+    .card-bottom {
+        margin-top: 25px;
+    }
+}
+

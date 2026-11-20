@@ -546,19 +546,28 @@ public static Id savePayment(
     String paymentDetailsJson
 ) {
 
-    if (bookingId == null) {
+    if (bookingId == null || String.isBlank(method)) {
         throw new AuraHandledException(
-            'Booking ID is required.'
-        );
-    }
-
-    if (String.isBlank(method)) {
-        throw new AuraHandledException(
-            'Select a payment method.'
+            'Booking and payment method are required.'
         );
     }
 
     try {
+
+        Opportunity booking = [
+            SELECT Id, StageName, Departure_Date__c
+            FROM Opportunity
+            WHERE Id = :bookingId
+            LIMIT 1
+            FOR UPDATE
+        ];
+
+        if (booking.StageName == 'Closed Won' ||
+            booking.StageName == 'Closed Lost') {
+            throw new AuraHandledException(
+                'This Booking is closed and cannot receive a payment.'
+            );
+        }
 
         List<OpportunityLineItem> lines = [
             SELECT Quantity, UnitPrice
@@ -569,7 +578,7 @@ public static Id savePayment(
 
         if (lines.isEmpty()) {
             throw new AuraHandledException(
-                'Save at least one Travel Package product first.'
+                'Save the Travel Package first.'
             );
         }
 
@@ -590,30 +599,23 @@ public static Id savePayment(
 
         if (!fields.containsKey('Booking__c')) {
             throw new AuraHandledException(
-                'Payment__c.Booking__c is missing. Check the Booking lookup field.'
+                'Payment Booking lookup is missing.'
             );
         }
-Opportunity booking = [
-    SELECT Id, Departure_Date__c
-    FROM Opportunity
-    WHERE Id = :bookingId
-    LIMIT 1
-];
 
-if (booking.Departure_Date__c == null) {
-    throw new AuraHandledException(
-        'Departure Date is required.'
-    );
-}
+        List<Payment__c> existingPayments = [
+            SELECT Id, Status__c
+            FROM Payment__c
+            WHERE Booking__c = :bookingId
+            AND Status__c = 'Pending'
+            LIMIT 1
+        ];
 
-Integer daysRemaining =
-    Date.today().daysBetween(booking.Departure_Date__c);
-
-if (daysRemaining <= 45) {
-    throw new AuraHandledException(
-        'Installment payment is unavailable because departure is within 45 days.'
-    );
-}
+        if (!existingPayments.isEmpty()) {
+            throw new AuraHandledException(
+                'A pending payment already exists for this Booking.'
+            );
+        }
 
         Payment__c paymentRecord = new Payment__c();
 
@@ -627,6 +629,11 @@ if (daysRemaining <= 45) {
         paymentRecord.put('Status__c', 'Pending');
 
         insert paymentRecord;
+
+        // Update Booking stage.
+        booking.StageName = 'Payment';
+
+        update booking;
 
         return paymentRecord.Id;
 
@@ -733,6 +740,63 @@ public static Id createBookingQuote(Id bookingId) {
     insert quoteLines;
 
     return quoteRecord.Id;
+}
+public class PaymentWorkflowDTO {
+    @AuraEnabled public Id paymentId { get; set; }
+    @AuraEnabled public String paymentMethod { get; set; }
+    @AuraEnabled public String paymentStatus { get; set; }
+    @AuraEnabled public Decimal paymentAmount { get; set; }
+    @AuraEnabled public Boolean paymentCreated { get; set; }
+    @AuraEnabled public Boolean installmentsCreated { get; set; }
+    @AuraEnabled public Integer installmentCount { get; set; }
+}
+
+@AuraEnabled(cacheable=true)
+public static PaymentWorkflowDTO getPaymentWorkflow(Id bookingId) {
+
+    PaymentWorkflowDTO result = new PaymentWorkflowDTO();
+
+    result.paymentCreated = false;
+    result.installmentsCreated = false;
+    result.installmentCount = 0;
+
+    if (bookingId == null) {
+        return result;
+    }
+
+    List<Payment__c> payments = [
+        SELECT Id, Method__c, Status__c, Amount__c
+        FROM Payment__c
+        WHERE Booking__c = :bookingId
+        ORDER BY CreatedDate DESC
+        LIMIT 1
+    ];
+
+    if (!payments.isEmpty()) {
+
+        Payment__c paymentRecord = payments[0];
+
+        result.paymentId = paymentRecord.Id;
+        result.paymentMethod = paymentRecord.Method__c;
+        result.paymentStatus = paymentRecord.Status__c;
+        result.paymentAmount = paymentRecord.Amount__c;
+        result.paymentCreated = true;
+
+
+        List<Installment__c> installments = [
+            SELECT Id
+            FROM Installment__c 
+            WHERE Booking__c = :bookingId
+            AND Payment__c = :paymentRecord.Id
+        ];
+
+        result.installmentCount = installments.size();
+
+        result.installmentsCreated =
+            installments.size() == 3;
+    }
+
+    return result;
 }
 
 

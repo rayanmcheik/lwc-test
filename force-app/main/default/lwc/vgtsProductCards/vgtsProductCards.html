@@ -1,100 +1,92 @@
-
 <template>
-    <section class="vgts-container">
+    <div class="vgts-container">
 
         <div class="header">
-            <h2>VGTS Travel Options</h2>
-            <p>Available travel products for your destination</p>
+            <h2>VGTS Travel Products</h2>
+            <p>Available options for your destination</p>
         </div>
 
         <template if:true={hasProducts}>
             <div class="products-grid">
 
-                <template for:each={products} for:item="product">
+                <template for:each={products} for:item="p">
+                    <article key={p.productId} class="product-card">
 
-                    <article key={product.productId}
-                             class="product-card">
-
-                        <div class="card-banner">
+                        <div class="card-header">
                             <span>VGTS TRAVEL</span>
-                            <span>Travel Option</span>
+                            <span>{p.productType}</span>
                         </div>
 
-                        <div class="card-content">
+                        <div class="card-body">
 
-                            <h3>{product.name}</h3>
+                            <h2>{p.name}</h2>
 
-                            <div class="detail">
-                                <span>Product Code</span>
-                                <strong>{product.productCode}</strong>
+                            <p class="code">
+                                Product Code: {p.productCode}
+                            </p>
+
+                            <div class="section-title">
+                                TRAVEL DETAILS
                             </div>
 
-                            <div class="detail">
-                                <span>Destination</span>
-                                <strong>{product.destination}</strong>
-                            </div>
-
-                            <template if:true={product.departure}>
-                                <div class="detail">
-                                    <span>Departure</span>
-                                    <strong>{product.departure}</strong>
-                                </div>
+                            <template if:true={p.departure}>
+                                <p>Departure: {p.departure}</p>
                             </template>
 
-                            <template if:true={product.departureDate}>
-                                <div class="detail">
-                                    <span>Departure Date</span>
-                                    <strong>{product.departureDate}</strong>
-                                </div>
+                            <p>Destination: {p.destination}</p>
+
+                            <template if:true={p.departureDate}>
+                                <p>Departure Date: {p.departureDate}</p>
                             </template>
 
-                            <template if:true={product.returnDate}>
-                                <div class="detail">
-                                    <span>Return Date</span>
-                                    <strong>{product.returnDate}</strong>
-                                </div>
+                            <template if:true={p.returnDate}>
+                                <p>Return Date: {p.returnDate}</p>
                             </template>
 
-                            <template if:true={product.flightType}>
-                                <div class="detail">
-                                    <span>Flight Type</span>
-                                    <strong>{product.flightType}</strong>
+                            <template if:true={p.flightType}>
+                                <div class="section-title">
+                                    FLIGHT DETAILS
                                 </div>
+                                <p>Flight Type: {p.flightType}</p>
                             </template>
 
-                            <template if:true={product.sellingPrice}>
+                            <template if:true={p.cabinClass}>
+                                <p>Cabin Class: {p.cabinClass}</p>
+                            </template>
+
+                            <template if:true={p.sellingPrice}>
                                 <div class="price">
-                                    {product.sellingPrice}
-                                    {product.currencyCode}
+                                    {p.sellingPrice}
+                                    {p.currencyCode}
                                 </div>
                             </template>
 
-                            <template if:true={product.description}>
-                                <p class="description">
-                                    {product.description}
-                                </p>
+                            <template if:true={p.fees}>
+                                <p>Fees: {p.fees}</p>
                             </template>
 
-                            <button
-                                class="whatsapp-button"
-                                data-id={product.productId}
-                                onclick={handleWhatsApp}>
-                                Contact VGTS on WhatsApp
-                            </button>
+                            <template if:true={p.taxes}>
+                                <p>Taxes: {p.taxes}</p>
+                            </template>
+
+                            <template if:true={p.description}>
+                                <div class="section-title">
+                                    DESCRIPTION
+                                </div>
+                                <p>{p.description}</p>
+                            </template>
 
                         </div>
                     </article>
-
                 </template>
+
             </div>
         </template>
 
         <template if:false={hasProducts}>
-            <div class="empty-message">
-                No matching VGTS travel products found.
-            </div>
+            <p>No matching products found.</p>
         </template>
 
-    </section>
+    </div>
 </template>
 
