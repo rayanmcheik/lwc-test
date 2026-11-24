@@ -1,7 +1,8 @@
-/* ================================
-   VGTS TRAVEL CATALOGUE
-================================ */
 
+/* =====================================================
+   VGTS TRAVEL BOOKING SERVICE SELECTOR
+   COMPLETE CSS
+===================================================== */
 
 :host {
     display: block;
@@ -13,9 +14,9 @@
     --vgts-background: #f8fafc;
 }
 
-
-/* Catalogue Header */
-
+/* =====================================================
+   CATALOGUE HEADER
+===================================================== */
 
 .catalogue-toolbar {
     display: flex;
@@ -29,7 +30,6 @@
     border-radius: 14px;
 }
 
-
 .catalogue-title {
     font-size: 23px;
     font-weight: 700;
@@ -37,16 +37,15 @@
     margin-bottom: 6px;
 }
 
-
 .intro-text {
     color: var(--vgts-muted);
     font-size: 14px;
     line-height: 1.6;
 }
 
-
-/* Search and Filter Panels */
-
+/* =====================================================
+   SEARCH AND FILTER PANELS
+===================================================== */
 
 .slds-box {
     border: 1px solid var(--vgts-border);
@@ -56,25 +55,24 @@
     padding: 20px;
 }
 
-
 .slds-box h3 {
     color: var(--vgts-primary);
     font-size: 17px;
     font-weight: 700;
 }
 
-
-/* Tabs */
-
+/* =====================================================
+   TABS
+===================================================== */
 
 lightning-tabset {
     display: block;
     margin-top: 18px;
 }
 
-
-/* Product Card Grids */
-
+/* =====================================================
+   INDIVIDUAL PRODUCT GRIDS
+===================================================== */
 
 .catalogue-grid,
 .package-grid {
@@ -85,9 +83,9 @@ lightning-tabset {
     align-items: stretch;
 }
 
-
-/* Individual Product Cards */
-
+/* =====================================================
+   INDIVIDUAL PRODUCT CARDS
+===================================================== */
 
 .package-card {
     display: flex;
@@ -98,10 +96,10 @@ lightning-tabset {
     border: 1px solid var(--vgts-border);
     border-radius: 16px;
     box-shadow: 0 3px 12px rgba(15, 35, 65, 0.07);
-    transition: transform 0.2s ease, box-shadow 0.2s ease,
-        border-color 0.2s ease;
+    transition: transform 0.2s ease,
+                box-shadow 0.2s ease,
+                border-color 0.2s ease;
 }
-
 
 .package-card:hover {
     transform: translateY(-4px);
@@ -109,9 +107,9 @@ lightning-tabset {
     box-shadow: 0 12px 28px rgba(15, 35, 65, 0.13);
 }
 
-
-/* Card Images */
-
+/* =====================================================
+   PRODUCT IMAGES
+===================================================== */
 
 .package-image-wrap {
     position: relative;
@@ -121,7 +119,6 @@ lightning-tabset {
     background: #edf2f7;
 }
 
-
 .package-image {
     display: block;
     width: 100%;
@@ -130,11 +127,9 @@ lightning-tabset {
     transition: transform 0.35s ease;
 }
 
-
 .package-card:hover .package-image {
     transform: scale(1.04);
 }
-
 
 .package-content,
 .package-image-placeholder {
@@ -148,9 +143,9 @@ lightning-tabset {
     background: linear-gradient(135deg, #edf4fc, #f8fafc);
 }
 
-
-/* Product Card Content */
-
+/* =====================================================
+   PRODUCT CARD CONTENT
+===================================================== */
 
 .package-card-body {
     display: flex;
@@ -159,7 +154,6 @@ lightning-tabset {
     padding: 18px;
 }
 
-
 .package-card-body h3 {
     color: var(--vgts-primary);
     font-size: 17px;
@@ -167,7 +161,6 @@ lightning-tabset {
     line-height: 1.4;
     overflow-wrap: anywhere;
 }
-
 
 .package-name {
     min-height: 24px;
@@ -179,13 +172,11 @@ lightning-tabset {
     overflow-wrap: anywhere;
 }
 
-
 .package-destination {
     margin-bottom: 8px;
     color: var(--vgts-muted);
     font-size: 13px;
 }
-
 
 .package-description {
     display: -webkit-box;
@@ -199,9 +190,18 @@ lightning-tabset {
     -webkit-line-clamp: 2;
 }
 
+/* =====================================================
+   PRODUCT PRICE
+===================================================== */
 
-/* Price */
-
+.package-price {
+    display: block;
+    color: var(--vgts-green);
+    font-size: 19px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    margin-top: 12px;
+}
 
 .card-footer {
     display: flex;
@@ -213,51 +213,33 @@ lightning-tabset {
     border-top: 1px solid #edf0f4;
 }
 
-
-.package-price {
-    display: block;
-    color: var(--vgts-green);
-    font-size: 19px;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-}
-
-
 .card-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 16px;
 }
 
-
 .card-actions lightning-button {
     display: block;
-    width: 100%;
 }
 
-
-.full-width-button {
-    display: block;
-    width: 100%;
-}
-
-
-/* Hotel Quantity Fields */
-
+/* =====================================================
+   HOTEL QUANTITY FIELDS
+===================================================== */
 
 .package-card-body .slds-grid {
     margin-top: 12px;
 }
-
 
 .package-card-body lightning-input {
     display: block;
     min-width: 0;
 }
 
-
-/* Details Panel */
-
+/* =====================================================
+   PRODUCT DETAILS PANEL
+===================================================== */
 
 .details-panel {
     margin-top: 26px;
@@ -268,24 +250,37 @@ lightning-tabset {
     box-shadow: 0 5px 18px rgba(15, 35, 65, 0.08);
 }
 
-
-.details-header {
+.details-heading {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--vgts-border);
+    margin-bottom: 16px;
 }
 
-
-.details-header h2 {
+.details-heading h2 {
     color: var(--vgts-primary);
     font-size: 21px;
     font-weight: 700;
 }
 
+.details-panel h3 {
+    color: var(--vgts-primary);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.details-panel p {
+    margin-top: 10px;
+    color: #475569;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.details-panel .package-price {
+    color: var(--vgts-green);
+    font-size: 23px;
+}
 
 .details-image {
     display: block;
@@ -296,36 +291,338 @@ lightning-tabset {
     background: #edf2f7;
 }
 
-
-.details-image-placeholder {
-    min-height: 180px;
-    border-radius: 12px;
+.details-layout {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.8fr) 1.2fr;
+    gap: 22px;
+    align-items: start;
 }
 
-
-.details-panel h3 {
+.details-content h3 {
+    margin-bottom: 12px;
     color: var(--vgts-primary);
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
 }
 
-
-.details-panel p {
-    margin-top: 10px;
+.details-content p {
+    margin-bottom: 10px;
     color: #475569;
-    line-height: 1.6;
     overflow-wrap: anywhere;
 }
 
+/* =====================================================
+   PREDEFINED TRAVEL PACKAGE HEADER
+===================================================== */
 
-.details-panel .package-price {
-    color: var(--vgts-green);
-    font-size: 23px;
+.travel-package-header {
+    padding: 22px;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #edf4fc, #ffffff);
+    border: 1px solid var(--vgts-border);
+    border-radius: 14px;
 }
 
+.travel-package-header h2 {
+    color: var(--vgts-primary);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 7px;
+}
 
-/* My Travel Package */
+.travel-package-header p {
+    color: var(--vgts-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
 
+/* =====================================================
+   PREDEFINED TRAVEL PACKAGE LIST
+===================================================== */
+
+.travel-package-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 8px 0 20px;
+}
+
+/* =====================================================
+   LARGE HORIZONTAL PACKAGE CARD
+===================================================== */
+
+.travel-package-row {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 22px;
+    padding: 22px;
+    background: #ffffff;
+    border: 1px solid var(--vgts-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 35, 65, 0.06);
+    transition: box-shadow 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.travel-package-row:hover {
+    border-color: #b8cde7;
+    box-shadow: 0 8px 22px rgba(15, 35, 65, 0.10);
+}
+
+/* =====================================================
+   TRAVEL PACKAGE COVER
+===================================================== */
+
+.travel-package-cover {
+    height: 100%;
+    min-height: 320px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #edf2f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.travel-package-cover img {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+    object-fit: cover;
+}
+
+.travel-package-cover-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 320px;
+    color: #64748b;
+    background: linear-gradient(135deg, #edf4fc, #f8fafc);
+}
+
+/* =====================================================
+   TRAVEL PACKAGE INFORMATION
+===================================================== */
+
+.travel-package-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.travel-package-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.travel-package-title-row h2 {
+    color: var(--vgts-primary);
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.travel-package-title-row p {
+    margin-top: 5px;
+    color: var(--vgts-muted);
+    font-size: 14px;
+}
+
+.travel-package-description {
+    margin-top: 12px;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.travel-package-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 15px 0;
+    color: var(--vgts-muted);
+    font-size: 12px;
+}
+
+/* =====================================================
+   INCLUDED PRODUCTS
+===================================================== */
+
+.included-products {
+    margin-top: 10px;
+    padding: 17px;
+    border: 1px solid var(--vgts-border);
+    border-radius: 12px;
+    background: #f9fbfe;
+}
+
+.included-products h3 {
+    margin-bottom: 12px;
+    color: var(--vgts-primary);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* =====================================================
+   INCLUDED PRODUCT ROW
+===================================================== */
+
+.included-product-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e8edf4;
+}
+
+.included-product-row:last-child {
+    border-bottom: none;
+}
+
+/* PRODUCT THUMBNAIL */
+
+.included-product-image {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #edf2f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #64748b;
+}
+
+.included-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* PRODUCT DETAILS */
+
+.included-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.included-product-info strong {
+    display: block;
+    color: var(--vgts-primary);
+    font-size: 14px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.included-product-info p {
+    margin-top: 3px;
+    color: var(--vgts-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* PRODUCT PRICE */
+
+.included-product-price {
+    flex-shrink: 0;
+    color: var(--vgts-green);
+    font-size: 15px;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* =====================================================
+   TRAVEL PACKAGE FOOTER
+===================================================== */
+
+.travel-package-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.travel-package-footer span {
+    display: block;
+    color: var(--vgts-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.travel-package-price {
+    display: block;
+    margin-top: 5px;
+    color: var(--vgts-green);
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.travel-package-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* =====================================================
+   PACKAGE DETAILS PANEL
+===================================================== */
+
+.travel-package-details {
+    padding: 26px;
+    background: #ffffff;
+    border: 1px solid var(--vgts-border);
+    border-radius: 16px;
+    box-shadow: 0 5px 18px rgba(15, 35, 65, 0.08);
+}
+
+.travel-package-details h2 {
+    color: var(--vgts-primary);
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.travel-package-details h3 {
+    color: var(--vgts-primary);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.travel-package-details p {
+    color: #475569;
+    margin-top: 7px;
+    line-height: 1.6;
+}
+
+.travel-details-header {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+    margin-top: 18px;
+}
+
+.travel-details-cover {
+    display: block;
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.package-detail-products {
+    margin-top: 18px;
+}
+
+/* =====================================================
+   MY TRAVEL PACKAGE
+===================================================== */
 
 .selected-package-section {
     margin-top: 30px;
@@ -336,20 +633,17 @@ lightning-tabset {
     box-shadow: 0 4px 16px rgba(15, 35, 65, 0.06);
 }
 
-
 .selected-package-section h2 {
     color: var(--vgts-primary);
     font-size: 21px;
     font-weight: 700;
 }
 
-
 .selected-service-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
-
 
 .selected-service-row {
     display: flex;
@@ -360,21 +654,19 @@ lightning-tabset {
     border: 1px solid var(--vgts-border);
     border-radius: 12px;
     background: #fbfdff;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background 0.2s ease,
+                border-color 0.2s ease;
 }
-
 
 .selected-service-row:hover {
     background: var(--vgts-primary-light);
     border-color: #c5d6eb;
 }
 
-
 .selected-service-info {
     flex: 1;
     min-width: 0;
 }
-
 
 .selected-service-info strong {
     color: var(--vgts-primary);
@@ -382,13 +674,17 @@ lightning-tabset {
     overflow-wrap: anywhere;
 }
 
-
 .selected-service-info p {
     margin-top: 5px;
     color: var(--vgts-muted);
     overflow-wrap: anywhere;
 }
 
+.selected-package-label {
+    color: #2563eb !important;
+    font-size: 12px;
+    font-weight: 600;
+}
 
 .selected-service-price {
     display: flex;
@@ -397,15 +693,14 @@ lightning-tabset {
     flex-shrink: 0;
 }
 
-
 .selected-service-price strong {
     color: var(--vgts-green);
     font-size: 16px;
 }
 
-
-/* Total Price */
-
+/* =====================================================
+   TOTAL PRICE
+===================================================== */
 
 .total-panel {
     display: flex;
@@ -419,21 +714,19 @@ lightning-tabset {
     background: linear-gradient(135deg, #edf4fc, #f8fbff);
 }
 
-
 .total-panel span:first-child {
     color: var(--vgts-primary);
     font-weight: 600;
 }
-
 
 .total-panel span:last-child {
     color: var(--vgts-green);
     font-weight: 700;
 }
 
-
-/* Payment Panel */
-
+/* =====================================================
+   PAYMENT PANEL
+===================================================== */
 
 .payment-panel {
     margin-top: 28px;
@@ -444,7 +737,6 @@ lightning-tabset {
     box-shadow: 0 4px 16px rgba(15, 35, 65, 0.06);
 }
 
-
 .payment-panel h2 {
     color: var(--vgts-primary);
     font-size: 21px;
@@ -453,6 +745,12 @@ lightning-tabset {
     border-bottom: 1px solid var(--vgts-border);
 }
 
+.payment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+}
 
 .payment-amount {
     display: flex;
@@ -467,25 +765,16 @@ lightning-tabset {
     color: #334155;
 }
 
-
 .payment-amount strong {
     color: var(--vgts-green);
     font-size: 21px;
     font-weight: 700;
 }
 
-
 .payment-method {
     display: block;
     margin-top: 18px;
 }
-
-
-.confirm-payment {
-    display: block;
-    margin-top: 18px;
-}
-
 
 .payment-note {
     margin-top: 14px;
@@ -494,277 +783,109 @@ lightning-tabset {
     line-height: 1.6;
 }
 
+/* =====================================================
+   INSTALLMENT PANEL
+===================================================== */
 
-/* Empty States */
-
-
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 160px;
-    margin: 16px 0;
-    padding: 28px 20px;
-    border: 1px dashed #cbd5e1;
-    border-radius: 14px;
-    background: #f8fafc;
-    color: var(--vgts-muted);
-    text-align: center;
+.installment-panel {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #d7e5f5;
+    border-radius: 12px;
+    background: #f8fbff;
 }
 
-
-.empty-state p {
-    max-width: 520px;
-    margin-top: 12px;
-    line-height: 1.6;
-}
-
-
-/* General Supporting Classes */
-
-
-.package-type {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    padding: 6px 11px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    color: #164e75;
-    font-size: 11px;
-    font-weight: 700;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
-}
-
-
-.details-heading,
-.details-heading h2 {
+.installment-panel h3 {
     color: var(--vgts-primary);
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 12px;
 }
 
+.installment-panel p {
+    padding: 8px 0;
+    color: #475569;
+    border-bottom: 1px solid #e8edf4;
+}
 
-.details-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+/* =====================================================
+   QUOTE PANEL
+===================================================== */
+
+.quote-panel {
+    margin-top: 28px;
+    padding: 24px;
+    border: 1px solid var(--vgts-border);
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(15, 35, 65, 0.06);
+}
+
+.quote-panel h2 {
+    color: var(--vgts-primary);
+    font-size: 21px;
+    font-weight: 700;
     margin-bottom: 16px;
 }
 
+/* =====================================================
+   BOOKING DECISION
+===================================================== */
 
-.details-layout {
-    display: grid;
-    grid-template-columns: minmax(180px, 0.8fr) 1.2fr;
-    gap: 22px;
-    align-items: start;
+.booking-decision-panel {
+    margin-top: 25px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid var(--vgts-border);
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(15, 35, 65, 0.06);
 }
 
-
-.details-content h3 {
-    margin-bottom: 12px;
+.booking-decision-panel h2 {
     color: var(--vgts-primary);
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 700;
+    margin-bottom: 18px;
 }
 
-
-.details-content p {
-    margin-bottom: 10px;
-    color: #475569;
-    overflow-wrap: anywhere;
-}
-
-
-.details-price,
-.total-price {
-    color: var(--vgts-green);
-    font-weight: 700;
-}
-
-
-.table-scroll {
-    overflow-x: auto;
-}
-
-
-.panel-actions {
+.booking-decision-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
     margin-top: 18px;
 }
 
+/* COMPLETED */
 
-.empty-message {
-    padding: 22px 10px;
-    color: var(--vgts-muted);
-    text-align: center;
+.booking-completed {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #f0f8f3;
+    border: 1px solid #d4e9dc;
+    border-radius: 9px;
+    color: #176b43;
+    font-weight: 600;
 }
 
+/* CANCELLED */
 
-/* Destination Dropdown */
-
-
-.destination-search-container {
-    position: relative;
+.booking-cancelled {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #fff5f5;
+    border: 1px solid #f0dada;
+    border-radius: 9px;
+    color: #a12d2d;
+    font-weight: 600;
 }
 
-
-.destination-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 9000;
-    max-height: 220px;
-    overflow-y: auto;
-    background: #ffffff;
-    border: 1px solid #d8dde6;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-}
-
-
-.destination-option {
-    display: block;
-    width: 100%;
-    padding: 11px 12px;
-    text-align: left;
-    background: #ffffff;
-    border: 0;
-    border-bottom: 1px solid #eeeeee;
-    cursor: pointer;
-    color: #181818;
-}
-
-
-.destination-option:hover,
-.destination-option:focus {
-    background: #f3f6fa;
-    outline: none;
-}
-
-
-.destination-option-label {
-    font-size: 13px;
-}
-
-
-.destination-no-results {
-    padding: 12px;
-    color: #706e6b;
-    font-size: 13px;
-}
-
-.mypackage-image {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  padding: 2px;
-}
-
-
-@media (max-width: 1024px) {
-    .catalogue-grid,
-    .package-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-    }
-
-
-    .package-image-wrap {
-        height: 190px;
-    }
-}
-
-
-@media (max-width: 600px) {
-    .catalogue-toolbar {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 15px;
-    }
-
-
-    .catalogue-title {
-        font-size: 20px;
-    }
-
-
-    .catalogue-grid,
-    .package-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 16px;
-    }
-
-
-    .package-image-wrap {
-        height: 200px;
-    }
-
-
-    .package-card-body {
-        padding: 15px;
-    }
-
-
-    .details-panel,
-    .selected-package-section,
-    .payment-panel {
-        padding: 16px;
-    }
-
-
-    .details-layout {
-        grid-template-columns: 1fr;
-    }
-
-
-    .details-image {
-        max-height: 220px;
-    }
-
-
-    .details-heading,
-    .package-heading {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-
-    .panel-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-
-    .selected-service-row {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-
-    .selected-service-price {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-
-    .total-panel {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-
-    .payment-amount {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-}
+/* =====================================================
+   VISA SECTION
+===================================================== */
 
 .visa-section {
     border-radius: 8px;
@@ -773,6 +894,11 @@ lightning-tabset {
     border: 1px solid #e0e0e0;
 }
 
+.visa-section h2 {
+    color: var(--vgts-primary);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
 
 .visa-section .slds-notify_alert {
     border-radius: 6px;
@@ -793,14 +919,14 @@ lightning-tabset {
     border-color: #ceead6;
 }
 
-
 .visa-checklist-card {
     background-color: #ffffff;
     border: 1px solid #dddbda;
     border-radius: 6px;
     padding: 1.25rem;
     margin-bottom: 1.25rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease,
+                box-shadow 0.2s ease;
 }
 
 .visa-checklist-card:hover {
@@ -809,11 +935,12 @@ lightning-tabset {
 }
 
 .visa-checklist-card h3 {
+    font-size: 1.15rem;
     font-weight: 700;
-    color: #1b1b1b;
-    margin-bottom: 0.5rem;
+    color: #081c3b;
+    margin: 0 0.5rem 0.5rem 0;
     display: inline-block;
-    margin-right: 0.75rem;
+    vertical-align: middle;
 }
 
 .visa-checklist-card h4 {
@@ -830,7 +957,6 @@ lightning-tabset {
     font-size: 0.9rem;
 }
 
-
 .visa-checklist-card lightning-input,
 .visa-checklist-card lightning-combobox {
     margin-bottom: 0.75rem;
@@ -840,63 +966,8 @@ lightning-tabset {
 .visa-checklist-card lightning-input[data-field*="Completed"] {
     margin-bottom: 0.5rem;
     display: block;
-    --lwc-squareIconUtilitySmall: 1.1rem;
 }
 
-
-.visa-section .slds-m-top_large {
-    border-top: 1px solid #f3f2f1;
-    padding-top: 1.25rem;
-}
-
-.visa-section .slds-text-color_error {
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-}
-.visa-section p strong {
-    color: #1b1b1b;
-    display: inline-block;
-    min-width: 110px; /* Aligns values cleanly side-by-side */
-}
-
-/* Requirements Wrapper Container */
-.visa-section .slds-m-top_medium {
-    background-color: #f8f9fa;
-    border-left: 4px solid #0070d2; /* Distinct blue vertical accent line */
-    padding: 0.75rem 1rem;
-    border-radius: 0 4px 4px 0;
-}
-
-.visa-section .slds-m-top_medium strong {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #0070d2;
-    font-size: 0.95rem;
-}
-
-/* Lightning Formatted Text Output Styling */
-.visa-section lightning-formatted-text {
-    display: block;
-    color: #3e3e3c;
-    line-height: 1.5;
-    font-size: 0.9rem;
-    white-space: pre-wrap; /* Maintains spacing/newlines from the API response */
-}
-
-/* ==========================================================================
-   Visa Free Cards Layout
-   ========================================================================== */
-.visa-checklist-card h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #081c3b;
-    margin: 0 0.5rem 0.5rem 0;
-    vertical-align: middle;
-}
-
-/* Align badge tightly next to the Country Title */
 .visa-checklist-card lightning-badge {
     vertical-align: text-bottom;
     margin-bottom: 0.5rem;
@@ -905,10 +976,276 @@ lightning-tabset {
     font-weight: 600;
 }
 
-/* Text fields inside the Visa Free card */
-.visa-checklist-card p:last-of-type {
-    margin-bottom: 0; /* Clears excess margin at the bottom of the card */
-    padding-top: 0.5rem;
-    border-top: 1px solid #f3f2f1; /* Subtly splits structural info from custom API notes */
-    margin-top: 0.5rem;
+.visa-section lightning-formatted-text {
+    display: block;
+    color: #3e3e3c;
+    line-height: 1.5;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
 }
+
+.visa-section p strong {
+    color: #1b1b1b;
+    display: inline-block;
+    min-width: 110px;
+}
+
+/* =====================================================
+   EMPTY STATES
+===================================================== */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    margin: 16px 0;
+    padding: 28px 20px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: var(--vgts-muted);
+    text-align: center;
+}
+
+.empty-state p {
+    max-width: 520px;
+    margin-top: 12px;
+    line-height: 1.6;
+}
+
+/* =====================================================
+   DESTINATION DROPDOWN
+===================================================== */
+
+.destination-search-container {
+    position: relative;
+}
+
+.destination-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9000;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+}
+
+.destination-option {
+    display: block;
+    width: 100%;
+    padding: 11px 12px;
+    text-align: left;
+    background: #ffffff;
+    border: 0;
+    border-bottom: 1px solid #eeeeee;
+    cursor: pointer;
+    color: #181818;
+}
+
+.destination-option:hover,
+.destination-option:focus {
+    background: #f3f6fa;
+    outline: none;
+}
+
+/* =====================================================
+   SUPPORTING CLASSES
+===================================================== */
+
+.mypackage-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    padding: 2px;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.empty-message {
+    padding: 22px 10px;
+    color: var(--vgts-muted);
+    text-align: center;
+}
+
+/* =====================================================
+   RESPONSIVE TABLET
+===================================================== */
+
+@media (max-width: 1024px) {
+
+    .catalogue-grid,
+    .package-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .travel-package-row {
+        grid-template-columns: 210px minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .travel-package-cover,
+    .travel-package-cover img,
+    .travel-package-cover-placeholder {
+        min-height: 280px;
+    }
+
+}
+
+/* =====================================================
+   RESPONSIVE MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .catalogue-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .catalogue-title {
+        font-size: 20px;
+    }
+
+    .catalogue-grid,
+    .package-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .package-image-wrap {
+        height: 200px;
+    }
+
+    .package-card-body {
+        padding: 15px;
+    }
+
+    .travel-package-row {
+        grid-template-columns: 1fr;
+        padding: 15px;
+        gap: 16px;
+    }
+
+    .travel-package-cover {
+        height: 220px;
+        min-height: 220px;
+    }
+
+    .travel-package-cover img,
+    .travel-package-cover-placeholder {
+        height: 220px;
+        min-height: 220px;
+    }
+
+    .travel-package-title-row {
+        flex-direction: column;
+    }
+
+    .travel-package-title-row h2 {
+        font-size: 20px;
+    }
+
+    .travel-package-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .travel-package-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .travel-package-details {
+        padding: 16px;
+    }
+
+    .travel-details-header {
+        grid-template-columns: 1fr;
+    }
+
+    .travel-details-cover {
+        height: 200px;
+    }
+
+    .included-product-image {
+        width: 48px;
+        height: 48px;
+    }
+
+    .included-product-row {
+        gap: 9px;
+    }
+
+    .included-product-price {
+        font-size: 12px;
+    }
+
+    .details-panel,
+    .selected-package-section,
+    .payment-panel,
+    .quote-panel,
+    .booking-decision-panel {
+        padding: 16px;
+    }
+
+    .details-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .details-image {
+        max-height: 220px;
+    }
+
+    .selected-service-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .selected-service-price {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .total-panel {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .payment-amount {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .booking-decision-actions,
+    .payment-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .installment-panel {
+        padding: 15px;
+    }
+
+}
+

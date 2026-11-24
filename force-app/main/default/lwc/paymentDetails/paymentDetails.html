@@ -1,7 +1,11 @@
 
 <template>
     <div class="payment-details-container">
-
+         <template if:true={isCash}>
+<h3 class="slds-text-heading_medium slds-m-bottom_medium">
+               Cash Payment
+            </h3>               
+         </template>
         <template if:true={isVisa}>
 
             <h3 class="slds-text-heading_medium slds-m-bottom_medium">

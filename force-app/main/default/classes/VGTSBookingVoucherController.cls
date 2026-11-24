@@ -101,7 +101,7 @@ public with sharing class VGTSBookingVoucherController {
 
         calculatePayment(bookingId);
 
-        fullyPaid= true;
+        
      
 
         loadExistingQrFiles(bookingId);

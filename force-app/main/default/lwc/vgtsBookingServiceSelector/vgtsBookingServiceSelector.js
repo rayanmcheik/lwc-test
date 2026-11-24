@@ -7,12 +7,16 @@ import getBookingServices from '@salesforce/apex/VGTSBookingPackageController.ge
 import saveBookingServices from '@salesforce/apex/VGTSBookingPackageController.saveBookingServices';
 import savePayment from '@salesforce/apex/VGTSBookingPackageController.savePayment';
 import createBookingQuote from '@salesforce/apex/VGTSBookingPackageController.createBookingQuote';
-
+import getPredefinedTravelPackages from '@salesforce/apex/VGTSPredefinedTravelPackageController.getPredefinedTravelPackages';
 import getVisaSummary from '@salesforce/apex/VisaChecklistController.getVisaSummary';
 import getActiveVisaChecklists from '@salesforce/apex/VisaChecklistController.getActiveVisaChecklists';
 import checkVisaRequirements from '@salesforce/apex/VisaChecklistController.checkVisaRequirements';
 import saveVisaInformation from '@salesforce/apex/VisaChecklistController.saveVisaInformation';
 import getPaymentWorkflow from '@salesforce/apex/VGTSBookingPackageController.getPaymentWorkflow';
+import LightningConfirm from 'lightning/confirm';
+import confirmBookingRecord from '@salesforce/apex/VGTSBookingPackageController.confirmBooking';
+import cancelBookingRecord from '@salesforce/apex/VGTSBookingPackageController.cancelBooking';
+
 
 const HOTEL_ROOM_FEE = 50;
 const HOTEL_NIGHT_FEE = 30;
@@ -59,6 +63,30 @@ export default class VgtsBookingServiceSelector extends LightningElement {
     wiredVisaSummaryResult;
     wiredVisaChecklistsResult;
 
+    Stage = '';
+    quoteId = null;
+    quoteCreated = false;
+
+    paymentStructure = 'Single';
+    installmentRequired = false;
+
+    wiredPaymentWorkflowResult;
+
+    predefinedTravelPackages = [];
+    travelPackageError = '';
+    selectedTravelPackage = null;
+    wiredPredefinedPackagesResult;
+
+    quoteStatus = '';
+    quoteIsSyncing = false;
+    requiredPaymentReceived = false;
+
+    depositAmount = 0;
+    depositPaidAmount = 0;
+    depositStatus = '';
+    paymentStatus = '';
+
+
     flightTypeOptions = [
         { label: 'All Flight Types', value: '' },
         { label: 'Roundtrip', value: 'Roundtrip' },
@@ -94,6 +122,61 @@ paymentMethodOptions = [
         { label: '3 Installments', value: 'Installments' }
     ];
 
+// ========================================
+// LOAD PREDEFINED TRAVEL PACKAGES
+// ========================================
+
+@wire(getPredefinedTravelPackages, {
+    bookingId: '$recordId'
+})
+wiredPredefinedTravelPackages(result) {
+
+    this.wiredPredefinedPackagesResult = result;
+
+    const { data, error } = result;
+
+    if (data) {
+
+        this.travelPackageError = '';
+
+        this.predefinedTravelPackages = data.map(item => ({
+
+            ...item,
+
+            id: item.packageId,
+
+            displayPrice: Number(item.packagePrice || 0),
+
+            productCount: Number(item.productCount || 0),
+
+            items: (item.items || []).map(product => ({
+
+                ...product,
+
+                id: product.productId,
+
+                quantity: Number(product.quantity || 1),
+
+                rooms: Number(product.rooms || 1),
+
+                nights: Number(product.nights || 1),
+
+                price: Number(product.price || 0),
+
+                lineTotal: Number(product.lineTotal || 0)
+
+            }))
+
+        }));
+
+    } else if (error) {
+
+        this.predefinedTravelPackages = [];
+
+        this.travelPackageError = this.reduceError(error);
+
+    }
+}
 
     // =====================================================
     // LOAD PRODUCT CATALOGUE
@@ -200,7 +283,10 @@ paymentMethodOptions = [
 
                     quantity: Number(item.quantity || 1),
                     rooms: Number(item.rooms || 1),
-                    nights: Number(item.nights || 1)
+                    nights: Number(item.nights || 1),
+                    travelPackageId: item.travelPackageId || null,
+                    expectedSavedUnitPrice: Number(item.price || 0),
+
                 }));
 
                 const quantities = { ...this.hotelQuantities };
@@ -301,16 +387,21 @@ paymentMethodOptions = [
                     Number(item.nights || 1) ||
 
                 Number(saved.price || 0).toFixed(2) !==
-                    Number(item.price || 0).toFixed(2);
+                Number(
+                    item.expectedSavedUnitPrice ?? item.price ?? 0
+                ).toFixed(2);
+
         });
     }
 
-    get savePackageDisabled() {
-        return this.isSaving ||
-            this.isCheckingVisa ||
-            this.isSelectionEmpty ||
-            !this.hasSelectedAirTicket;
-    }
+   get savePackageDisabled() {
+    return this.isSaving ||
+        this.isCheckingVisa ||
+        this.isSelectionEmpty ||
+        !this.hasSelectedAirTicket ||
+        this.isBookingFinalized;
+}
+
 
     get visaButtonDisabled() {
         return !this.hasSavedAirTicket ||
@@ -408,6 +499,66 @@ paymentMethodOptions = [
             }))
         ];
     }
+get isBookingFinalized() {
+    return this.Stage === 'Confirmed' ||
+        this.Stage === 'Completed' ||
+        this.Stage === 'Cancelled';
+}
+
+
+get isConfirmed() {
+    return this.Stage === 'Confirmed';
+}
+
+get canConfirmBooking() {
+    return !this.isSaving &&
+        !this.isBookingFinalized &&
+        this.Stage === 'Payment' &&
+        this.quoteCreated &&
+        this.quoteStatus === 'Accepted' &&
+        this.quoteIsSyncing === true &&
+        this.requiredPaymentReceived === true;
+}
+
+get confirmButtonDisabled() {
+    return !this.canConfirmBooking;
+}
+
+
+get hasPredefinedTravelPackages() {
+    return this.predefinedTravelPackages.length > 0;
+}
+
+get showTravelPackageEmptyState() {
+    return !this.isLoading &&
+        !this.hasPredefinedTravelPackages &&
+        !this.travelPackageError;
+}
+
+get travelPackageCount() {
+    return this.predefinedTravelPackages.length;
+}
+
+get isCompleted() {
+    return this.Stage === 'Completed';
+}
+
+get isCancelled() {
+    return this.Stage === 'Cancelled';
+}
+
+get showBookingDecisionButtons() {
+    return this.quoteCreated &&
+        !this.isBookingFinalized;
+}
+
+get isPaymentStage() {
+    return this.Stage === 'Payment';
+}
+
+get isSinglePayment() {
+    return this.paymentStructure === 'Single';
+}
 
     get displayAirTickets() {
 
@@ -593,30 +744,56 @@ paymentMethodOptions = [
         );
     }
 
+get totalPrice() {
+
+    return this.selectedServices.reduce(
+        (total, item) => {
+
+            if (item.packageLineTotal !== undefined) {
+                return total + Number(item.packageLineTotal || 0);
+            }
+
+            return total +
+                Number(item.price || 0) *
+                Number(item.quantity || 1);
+        },
+        0
+    );
+}
+
+get services() {
+
+    return this.selectedServices.map(item => ({
+
+        ...item,
+
+        id: item.packageId,
+
+        lineTotal: item.packageLineTotal !== undefined
+            ? Number(item.packageLineTotal)
+            : Number(item.price || 0) *
+              Number(item.quantity || 1),
+
+        hotelDescription:
+            item.category === 'Hotels'
+                ? `${item.rooms} room(s), ${item.nights} night(s)`
+                : '',
+
+        travelPackageLabel: item.travelPackageName || ''
+
+    }));
+}
+
+
+
     // =====================================================
     // CATEGORY AND PRICE HELPERS
     // =====================================================
 
-    normalizePackageType(value) {
+normalizePackageType(value) {
+    return String(value || '').trim();
+}
 
-        const v = String(value || '')
-            .trim()
-            .toLowerCase()
-            .replace(/[_-]+/g, ' ');
-
-        if (v.includes('air') ||
-            v.includes('flight') ||
-            v.includes('ticket')) return 'Air_Tickets';
-
-        if (v.includes('hotel') ||
-            v.includes('accommodation')) return 'Hotels';
-
-        if (v.includes('ground') ||
-            v.includes('transfer') ||
-            v.includes('transport')) return 'Ground';
-
-        return 'Ancillary';
-    }
 
     sameText(first, second) {
 
@@ -634,8 +811,154 @@ paymentMethodOptions = [
     // =====================================================
     // FILTERS
     // =====================================================
+handleViewTravelPackage(event) {
 
-    handleTabChange(event) {
+    const packageId = event.currentTarget.dataset.id;
+
+    this.selectedTravelPackage =
+        this.predefinedTravelPackages.find(
+            item => item.packageId === packageId
+        ) || null;
+}
+
+// =====================================================
+// ADD COMPLETE PREDEFINED TRAVEL PACKAGE
+// =====================================================
+
+handleAddTravelPackage(event) {
+
+    if (this.isBookingFinalized) {
+        this.showToast(
+            'Booking finalized',
+            'This Booking cannot be modified.',
+            'warning'
+        );
+        return;
+    }
+
+    if (this.hasUnsavedChanges && this.hasSavedAirTicket) {
+        this.showToast(
+            'Save existing changes first',
+            'Save your current Travel Package before adding another predefined package.',
+            'warning'
+        );
+        return;
+    }
+
+    const travelPackageId = event.currentTarget.dataset.id;
+
+    const selectedPackage =
+        this.predefinedTravelPackages.find(
+            item => item.packageId === travelPackageId
+        );
+
+    if (!selectedPackage || !selectedPackage.items?.length) {
+        this.showToast(
+            'Package unavailable',
+            'This Travel Package has no available products.',
+            'error'
+        );
+        return;
+    }
+
+    const packageServices = selectedPackage.items.map(product => {
+
+        const quantity = Number(product.quantity || 1);
+        const rooms = Number(product.rooms || 1);
+        const nights = Number(product.nights || 1);
+
+        const originalPrice = Number(product.price || 0);
+
+        const discountedLineTotal =
+            Number(product.discountedLineTotal ?? product.lineTotal ?? 0);
+
+        const expectedSavedUnitPrice = quantity > 0
+            ? Math.round(
+                (discountedLineTotal / quantity) * 100
+            ) / 100
+            : originalPrice;
+
+        return {
+
+            packageId: product.productId,
+
+            travelPackageId: selectedPackage.packageId,
+
+            travelPackageName: selectedPackage.name,
+
+            name: product.name,
+
+            category: product.category,
+
+            destination: product.destination || '',
+
+            supplier: product.supplier || '',
+
+            description: product.description || '',
+
+            imageUrl: product.imageUrl || '',
+
+            basePrice: Number(product.basePrice || 0),
+
+            // Original price is sent to Apex for price validation.
+            price: originalPrice,
+
+            // Discounted amount is used for local display.
+            packageLineTotal: discountedLineTotal,
+
+            expectedSavedUnitPrice,
+
+            discountAmount: Number(product.discountAmount || 0),
+
+            currencyCode: product.currencyCode ||
+                selectedPackage.currencyCode || 'USD',
+
+            quantity,
+
+            rooms,
+
+            nights
+        };
+    });
+
+    const existingIds = new Set(
+        this.selectedServices.map(item => item.packageId)
+    );
+
+    const newServices = packageServices.filter(
+        item => !existingIds.has(item.packageId)
+    );
+
+    const updatedServices = packageServices.filter(
+        item => existingIds.has(item.packageId)
+    );
+
+    this.selectedServices = [
+        ...this.selectedServices.filter(
+            item => !packageServices.some(
+                product => product.packageId === item.packageId
+            )
+        ),
+        ...packageServices
+    ];
+
+    this.selectedTravelPackage = null;
+
+    this.markPackageChanged();
+
+    this.showToast(
+        'Travel Package added',
+        `${selectedPackage.name}: ${packageServices.length} products added to My Travel Package.`,
+        'success'
+    );
+}
+
+
+handleCloseTravelPackageDetails() {
+    this.selectedTravelPackage = null;
+}
+
+handleTabChange(event) {
         this.activeTab = event.detail.value;
     }
 
@@ -723,6 +1046,16 @@ paymentMethodOptions = [
         const product = this.travelPackages.find(
             item => item.id === productId
         );
+if (this.isBookingFinalized) {
+
+    this.showToast(
+        'Booking finalized',
+        'A Completed or Cancelled Booking cannot be modified.',
+        'warning'
+    );
+
+    return;
+}
 
         if (!product ||
             !product.name ||
@@ -837,6 +1170,16 @@ paymentMethodOptions = [
     handleRemoveService(event) {
 
         const productId = event.currentTarget.dataset.id;
+if (this.isBookingFinalized) {
+
+    this.showToast(
+        'Booking finalized',
+        'A Completed or Cancelled Booking cannot be modified.',
+        'warning'
+    );
+
+    return;
+}
 
         this.selectedServices = this.selectedServices.filter(
             item => item.packageId !== productId
@@ -846,6 +1189,16 @@ paymentMethodOptions = [
     }
 
     handleClearPackage() {
+if (this.isBookingFinalized) {
+
+    this.showToast(
+        'Booking finalized',
+        'A Completed or Cancelled Booking cannot be modified.',
+        'warning'
+    );
+
+    return;
+}
 
         this.selectedServices = [];
         this.selectedService = null;
@@ -903,13 +1256,23 @@ paymentMethodOptions = [
 
             const selected = validProducts.map(item => ({
 
-                productId: item.packageId,
-                quantity: Number(item.quantity || 1),
-                rooms: Number(item.rooms || 1),
-                nights: Number(item.nights || 1),
-                price: Number(item.price || 0),
-                description: item.description || ''
-            }));
+                    productId: item.packageId,
+
+                    travelPackageId: item.travelPackageId || null,
+
+                    quantity: Number(item.quantity || 1),
+
+                    rooms: Number(item.rooms || 1),
+
+                    nights: Number(item.nights || 1),
+
+                    // Original price is used for server-side validation.
+                    price: Number(item.price || 0),
+
+                    description: item.description || ''
+
+                }));
+
 
             const count = await saveBookingServices({
 
@@ -947,10 +1310,24 @@ paymentMethodOptions = [
             this.isSaving = false;
         }
     }
+    // =====================================================
+    // REFRESH PREDEFINED PACKAGES
+    // =====================================================
+
+async refreshPredefinedPackages() {
+
+    if (this.wiredPredefinedPackagesResult) {
+
+        await refreshApex(
+            this.wiredPredefinedPackagesResult
+        );
+    }
+}
 
     // =====================================================
     // MANUAL VISA CHECK
     // =====================================================
+
 
     async handleCheckVisa() {
 
@@ -1165,46 +1542,86 @@ showPaymentDetails = false;
 paymentStructure = 'Single';
 
 handlePaymentStructureChange(event) {
+
     this.paymentStructure = event.detail.value;
-    this.installmentRequired = this.paymentStructure === 'Installments';
+
+    this.installmentRequired =
+        this.paymentStructure === 'Installments';
 }
+
+
 get paymentButtonDisabled() {
     return this.isSaving ||
         this.paymentCreated ||
+        this.isBookingFinalized ||
         !this.hasSavedAirTicket ||
         this.hasUnsavedChanges;
 }
 
 get installmentButtonDisabled() {
     return this.isSaving ||
+        this.isBookingFinalized ||
         !this.paymentCreated ||
+        this.paymentStructure !== 'Installments' ||
         this.installmentsCreated;
 }
 
 get createQuoteDisabled() {
     return this.isSaving ||
+        this.isBookingFinalized ||
         !this.paymentCreated ||
         this.quoteCreated ||
+        !this.paymentId ||
+        (
+            this.paymentStructure === 'Installments' &&
+            !this.installmentsCreated
+        ) ||
         this.quoteButtonDisabled;
 }
+
 
     handlePaymentMethodChange(event) {
         this.paymentMethod = event.detail.value;
         this.showPaymentDetails = !!this.paymentMethod;
     }
+
 @wire(getPaymentWorkflow, { bookingId: '$recordId' })
-wiredPaymentWorkflow({ data, error }) {
+wiredPaymentWorkflow(result) {
+
+    this.wiredPaymentWorkflowResult = result;
+
+    const { data, error } = result;
 
     if (data) {
 
         this.paymentId = data.paymentId;
-
         this.paymentCreated = data.paymentCreated;
-
-        this.installmentsCreated =
-            data.installmentsCreated;
+        this.installmentsCreated = data.installmentsCreated;
 
         this.paymentMethod = data.paymentMethod || '';
+
+        this.paymentStructure =
+            data.paymentStructure || 'Single';
+
+        this.installmentRequired =
+            this.paymentStructure === 'Installments';
+
+        this.paymentStatus = data.paymentStatus || '';
+
+        this.quoteCreated = data.quoteCreated;
+        this.quoteId = data.quoteId;
+
+        this.quoteStatus = data.quoteStatus || '';
+        this.quoteIsSyncing = data.quoteIsSyncing === true;
+
+        this.requiredPaymentReceived =
+            data.requiredPaymentReceived === true;
+
+        this.depositAmount = data.depositAmount || 0;
+        this.depositPaidAmount = data.depositPaidAmount || 0;
+        this.depositStatus = data.depositStatus || '';
+
+        this.Stage = data.bookingStatus || '';
 
     } else if (error) {
 
@@ -1216,9 +1633,21 @@ wiredPaymentWorkflow({ data, error }) {
     }
 }
 
- async handleRecordPayment() {
+
+
+ 
+async handleRecordPayment() {
 
     if (this.isSaving) return;
+
+    if (this.isBookingFinalized) {
+        this.showToast(
+            'Booking finalized',
+            'This Booking cannot receive another payment.',
+            'warning'
+        );
+        return;
+    }
 
     if (!this.hasSavedAirTicket || this.hasUnsavedChanges) {
         this.showToast(
@@ -1229,10 +1658,10 @@ wiredPaymentWorkflow({ data, error }) {
         return;
     }
 
-    if (!this.paymentMethod) {
+    if (!this.paymentMethod || !this.paymentStructure) {
         this.showToast(
-            'Payment method required',
-            'Select a payment method.',
+            'Payment information required',
+            'Select a payment method and payment structure.',
             'warning'
         );
         return;
@@ -1248,8 +1677,6 @@ wiredPaymentWorkflow({ data, error }) {
 
     if (details === null) return;
 
- 
-
     this.isSaving = true;
 
     try {
@@ -1259,19 +1686,21 @@ wiredPaymentWorkflow({ data, error }) {
             bookingId: this.recordId,
             method: this.paymentMethod,
             paymentDate: new Date().toISOString().slice(0, 10),
-            paymentDetailsJson: JSON.stringify(details)
+            paymentDetailsJson: JSON.stringify(details),
+            paymentStructure: this.paymentStructure
 
         });
 
         this.paymentId = createdPaymentId;
         this.paymentCreated = true;
 
-        this.paymentMethod = '';
         this.showPaymentDetails = false;
+
+        await refreshApex(this.wiredPaymentWorkflowResult);
 
         this.showToast(
             'Payment created',
-            `Pending Payment ID: ${createdPaymentId}`,
+            'Payment successfully created.',
             'success'
         );
 
@@ -1291,13 +1720,24 @@ wiredPaymentWorkflow({ data, error }) {
 
 
 
+
     // =====================================================
     // Installments
     // =====================================================
 
+
 async handleCreateInstallments() {
 
     if (this.isSaving) return;
+
+    if (this.isBookingFinalized) {
+        this.showToast(
+            'Booking finalized',
+            'This Booking cannot be modified.',
+            'warning'
+        );
+        return;
+    }
 
     if (!this.paymentCreated || !this.paymentId) {
         this.showToast(
@@ -1308,18 +1748,34 @@ async handleCreateInstallments() {
         return;
     }
 
+    if (this.paymentStructure !== 'Installments') {
+        this.showToast(
+            'Invalid payment structure',
+            'Select Installments as your payment structure.',
+            'warning'
+        );
+        return;
+    }
+
+    if (this.installmentsCreated) {
+        this.showToast(
+            'Already created',
+            'All three installments already exist.',
+            'info'
+        );
+        return;
+    }
+
     this.isSaving = true;
 
     try {
 
         const message = await createInstallmentSchedule({
-
             bookingId: this.recordId,
             paymentId: this.paymentId
-
         });
 
-        this.installmentsCreated = true;
+        await refreshApex(this.wiredPaymentWorkflowResult);
 
         this.showToast(
             'Installments created',
@@ -1329,6 +1785,8 @@ async handleCreateInstallments() {
 
     } catch (error) {
 
+        console.error('Installment error:', error);
+
         this.showToast(
             'Installment creation failed',
             this.reduceError(error),
@@ -1336,10 +1794,10 @@ async handleCreateInstallments() {
         );
 
     } finally {
-
         this.isSaving = false;
     }
 }
+
 
 
     // =====================================================
@@ -1347,9 +1805,19 @@ async handleCreateInstallments() {
     // =====================================================
 
 
-   async handleCreateQuote() {
+   
+async handleCreateQuote() {
 
     if (this.isSaving) return;
+
+    if (this.isBookingFinalized) {
+        this.showToast(
+            'Booking finalized',
+            'This Booking is already finalized.',
+            'warning'
+        );
+        return;
+    }
 
     if (!this.paymentCreated || !this.paymentId) {
         this.showToast(
@@ -1360,10 +1828,12 @@ async handleCreateInstallments() {
         return;
     }
 
-    if (this.installmentRequired && !this.installmentsCreated) {
+    if (this.paymentStructure === 'Installments' &&
+        !this.installmentsCreated) {
+
         this.showToast(
             'Installments required',
-            'Create all three installments before creating the Quote.',
+            'Create all three installments first.',
             'warning'
         );
         return;
@@ -1382,18 +1852,21 @@ async handleCreateInstallments() {
 
     try {
 
-        const quoteId = await createBookingQuote({
+        const createdQuoteId = await createBookingQuote({
 
             bookingId: this.recordId,
             paymentId: this.paymentId
 
         });
 
+        this.quoteId = createdQuoteId;
         this.quoteCreated = true;
+
+        await refreshApex(this.wiredPaymentWorkflowResult);
 
         this.showToast(
             'Quote created',
-            `Quote ID: ${quoteId}`,
+            'Quote successfully created: ' + createdQuoteId,
             'success'
         );
 
@@ -1410,6 +1883,110 @@ async handleCreateInstallments() {
         this.isSaving = false;
     }
 }
+
+
+async handleConfirmBooking() {
+
+    if (this.isSaving || !this.quoteCreated) return;
+
+    if (this.isBookingFinalized) return;
+
+    const confirmed = await LightningConfirm.open({
+        label: 'Confirm Booking',
+        message:
+            'Are you sure you want to confirm this Booking? ' +
+            'Its status will change to Completed.',
+        theme: 'success'
+    });
+
+    if (!confirmed) return;
+
+    this.isSaving = true;
+
+    try {
+
+        await confirmBookingRecord({
+            bookingId: this.recordId
+        });
+
+        await refreshApex(this.wiredPaymentWorkflowResult);
+
+        this.showToast(
+            'Booking confirmed',
+            'The Booking status is now Confirmed.',
+            'success'
+        );
+
+
+    } catch (error) {
+
+        this.showToast(
+            'Confirmation failed',
+            this.reduceError(error),
+            'error'
+        );
+
+    } finally {
+
+        this.isSaving = false;
+    }
+        await refreshApex(this.wiredPaymentWorkflowResult);
+
+}
+async refreshPaymentWorkflow() {
+
+    if (this.wiredPaymentWorkflowResult) {
+        await refreshApex(this.wiredPaymentWorkflowResult);
+    }
+}
+
+
+async handleCancelBooking() {
+
+    if (this.isSaving || !this.quoteCreated) return;
+
+    if (this.isBookingFinalized) return;
+
+    const confirmed = await LightningConfirm.open({
+        label: 'Cancel Booking',
+        message:
+            'Are you sure you want to cancel this Booking? ' +
+            'Its status will change to Cancelled.',
+        theme: 'warning'
+    });
+
+    if (!confirmed) return;
+
+    this.isSaving = true;
+
+    try {
+
+        await cancelBookingRecord({
+            bookingId: this.recordId
+        });
+
+        await refreshApex(this.wiredPaymentWorkflowResult);
+
+        this.showToast(
+            'Booking cancelled',
+            'The Booking status is now Cancelled.',
+            'success'
+        );
+
+    } catch (error) {
+
+        this.showToast(
+            'Cancellation failed',
+            this.reduceError(error),
+            'error'
+        );
+
+    } finally {
+
+        this.isSaving = false;
+    }
+}
+
 
     // =====================================================
     // TOAST AND ERROR
@@ -1436,5 +2013,70 @@ async handleCreateInstallments() {
             error?.message ||
             'An unexpected error occurred.';
     }
+    
+get packageTabs() {
+
+    const categories = [
+        ...new Set(
+            this.travelPackages
+                .map(item => item.category)
+                .filter(Boolean)
+        )
+    ];
+
+    const labels = {
+        Air_Tickets: 'Air Tickets',
+        Hotels: 'Hotels',
+        Ground: 'Ground Transfers',
+        Ancillary: 'Ancillary Services',
+        Offers: 'Offers'
+    };
+
+    return categories.map(category => {
+
+        let products = this.travelPackages.filter(
+            item => item.category === category
+        );
+
+        if (category === 'Air_Tickets') {
+            products = this.displayAirTickets;
+        }
+
+        if (category === 'Hotels') {
+            products = this.displayHotels;
+        }
+
+        return {
+            value: category,
+
+            label: labels[category] ||
+                category.replace(/[_-]+/g, ' '),
+
+            isAirTicketTab: category === 'Air_Tickets',
+            isHotelTab: category === 'Hotels',
+
+            items: products.map(item => ({
+
+                ...item,
+
+                isHotel: category === 'Hotels',
+                isAirTicket: category === 'Air_Tickets',
+
+                displayPrice: category === 'Hotels'
+                    ? item.calculatedPrice
+                    : item.price,
+
+                addButtonLabel:
+                    category === 'Air_Tickets' ? 'Add Flight' :
+                    category === 'Hotels' ? 'Add Hotel' :
+                    category === 'Ground' ? 'Add Transfer' :
+                    category === 'Offers' ? 'Add Offer' :
+                    'Add Service'
+            }))
+        };
+    });
+}
+
+
 }
 

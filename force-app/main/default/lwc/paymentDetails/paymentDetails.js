@@ -26,7 +26,9 @@ export default class PaymentDetails extends LightningElement {
         this.expiryDate = '';
         this.cvv = '';
     }
-
+get isCash() {
+        return this.paymentMethod === 'Cash';
+    }
     get isVisa() {
         return this.paymentMethod === 'Credit Card';
     }

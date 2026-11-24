@@ -4,164 +4,520 @@
 
         <div class="slds-p-around_medium">
 
+            <!-- HEADER -->
+
             <div class="catalogue-toolbar slds-m-bottom_medium">
-                <h2 class="catalogue-title">Explore Travel Packages</h2>
-                <p class="slds-text-color_weak">
-                    Select your travel services and save them to My Travel Package.
-                </p>
+                <div>
+                    <h2 class="catalogue-title">Explore Travel Packages</h2>
+                    <p class="slds-text-color_weak">
+                        Select individual travel services or complete predefined packages.
+                    </p>
+                </div>
             </div>
 
-            <template lwc:if={loadError}>
-                <div class="slds-notify slds-notify_alert slds-alert_error">
-                    {loadError}
-                </div>
-            </template>
 
-            <template lwc:if={isLoading}>
-                <lightning-spinner alternative-text="Loading products"></lightning-spinner>
-            </template>
+        <!-- BOOKING STATUS -->
 
-            <!-- PRODUCT CATALOGUE -->
+        <template lwc:if={isBookingFinalized}>
+            <div class="slds-notify slds-notify_alert slds-alert_success slds-m-bottom_medium">
+
+                <template lwc:if={isConfirmed}>
+                    Booking Confirmed Successfully.
+                </template>
+
+                <template lwc:if={isCompleted}>
+                    This Booking has been completed.
+                </template>
+
+                <template lwc:if={isCancelled}>
+                    This Booking has been cancelled.
+                </template>
+
+            </div>
+        </template>
+
+        <template lwc:if={isPaymentStage}>
+            <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-bottom_medium">
+                Quote accepted. Booking is waiting for the required payment.
+            </div>
+        </template>
+
+
+
+            <!-- ========================================= -->
+            <!-- DYNAMIC PRODUCT CATALOGUE -->
+            <!-- ========================================= -->
 
             <lightning-tabset
                 active-tab-value={activeTab}
                 onselect={handleTabChange}>
 
-                <!-- AIR TICKETS -->
+                <template for:each={packageTabs} for:item="tab">
 
-                <lightning-tab label="Air Tickets" value="Air_Tickets">
+                    <lightning-tab
+                        key={tab.value}
+                        label={tab.label}
+                        value={tab.value}>
 
-                    <div class="slds-box slds-m-bottom_medium">
+                        <!-- AIR TICKET FILTERS -->
 
-                        <h3 class="slds-text-heading_small slds-m-bottom_medium">
-                            Search Flights
-                        </h3>
+                        <template lwc:if={tab.isAirTicketTab}>
 
-                        <div class="slds-grid slds-wrap slds-gutters">
+                            <div class="slds-box slds-m-bottom_medium">
 
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                                <lightning-combobox
-                                    label="Going From"
-                                    value={filterOrigin}
-                                    options={originOptions}
-                                    data-field="filterOrigin"
-                                    onchange={handleFilterChange}>
-                                </lightning-combobox>
+                                <h3 class="slds-text-heading_small slds-m-bottom_medium">
+                                    Search Flights
+                                </h3>
+
+                                <div class="slds-grid slds-wrap slds-gutters">
+
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-combobox
+                                            label="Going From"
+                                            value={filterOrigin}
+                                            options={originOptions}
+                                            data-field="filterOrigin"
+                                            onchange={handleFilterChange}>
+                                        </lightning-combobox>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-combobox
+                                            label="Going To"
+                                            value={filterDestination}
+                                            options={destinationOptions}
+                                            data-field="filterDestination"
+                                            onchange={handleFilterChange}>
+                                        </lightning-combobox>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-combobox
+                                            label="Flight Type"
+                                            value={filterFlightType}
+                                            options={flightTypeOptions}
+                                            data-field="filterFlightType"
+                                            onchange={handleFilterChange}>
+                                        </lightning-combobox>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-combobox
+                                            label="Cabin Class"
+                                            value={filterCabinClass}
+                                            options={cabinClassOptions}
+                                            data-field="filterCabinClass"
+                                            onchange={handleFilterChange}>
+                                        </lightning-combobox>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-input
+                                            type="number"
+                                            label="Maximum Price"
+                                            value={maxPrice}
+                                            data-field="maxPrice"
+                                            onchange={handleFilterChange}>
+                                        </lightning-input>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-input
+                                            type="search"
+                                            label="Search Flights"
+                                            value={searchKeyword}
+                                            data-field="searchKeyword"
+                                            onchange={handleFilterChange}>
+                                        </lightning-input>
+                                    </div>
+
+                                </div>
+
+                                <lightning-button
+                                    label="Clear Filters"
+                                    onclick={handleClearFilters}>
+                                </lightning-button>
+
                             </div>
 
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                        </template>
+
+                        <!-- HOTEL FILTERS -->
+
+                        <template lwc:if={tab.isHotelTab}>
+
+                            <div class="slds-box slds-m-bottom_medium">
+
+                                <h3 class="slds-text-heading_small">
+                                    Find Hotels
+                                </h3>
+
                                 <lightning-combobox
-                                    label="Going To"
-                                    value={filterDestination}
+                                    label="Destination"
+                                    value={hotelDestinationFilter}
                                     options={destinationOptions}
-                                    data-field="filterDestination"
+                                    data-field="hotelDestinationFilter"
                                     onchange={handleFilterChange}>
                                 </lightning-combobox>
-                            </div>
 
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                                <lightning-combobox
-                                    label="Flight Type"
-                                    value={filterFlightType}
-                                    options={flightTypeOptions}
-                                    data-field="filterFlightType"
-                                    onchange={handleFilterChange}>
-                                </lightning-combobox>
-                            </div>
-
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                                <lightning-combobox
-                                    label="Cabin Class"
-                                    value={filterCabinClass}
-                                    options={cabinClassOptions}
-                                    data-field="filterCabinClass"
-                                    onchange={handleFilterChange}>
-                                </lightning-combobox>
-                            </div>
-
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                                <lightning-input
-                                    type="number"
-                                    label="Maximum Price"
-                                    value={maxPrice}
-                                    data-field="maxPrice"
-                                    onchange={handleFilterChange}>
-                                </lightning-input>
-                            </div>
-
-                            <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
                                 <lightning-input
                                     type="search"
-                                    label="Search Flights"
-                                    value={searchKeyword}
-                                    data-field="searchKeyword"
+                                    label="Search Hotels"
+                                    value={hotelSearchKeyword}
+                                    data-field="hotelSearchKeyword"
                                     onchange={handleFilterChange}>
                                 </lightning-input>
+
+                                <lightning-button
+                                    label="Clear Hotel Search"
+                                    onclick={handleClearHotelFilters}>
+                                </lightning-button>
+
                             </div>
 
-                        </div>
+                        </template>
 
-                        <lightning-button
-                            label="Clear Filters"
-                            onclick={handleClearFilters}>
-                        </lightning-button>
+                        <!-- INDIVIDUAL PRODUCT CARDS -->
+
+                        <template lwc:if={tab.items.length}>
+
+                            <div class="package-grid">
+
+                                <template for:each={tab.items} for:item="item">
+
+                                    <article key={item.id} class="package-card">
+
+                                        <div class="package-image-wrap">
+
+                                            <template lwc:if={item.imageUrl}>
+                                                <img
+                                                    src={item.imageUrl}
+                                                    alt={item.name}
+                                                    class="package-image"/>
+                                            </template>
+
+                                            <template lwc:else>
+                                                <div class="package-image-placeholder">
+                                                    <lightning-icon
+                                                        icon-name="utility:apps"
+                                                        size="large">
+                                                    </lightning-icon>
+                                                </div>
+                                            </template>
+
+                                        </div>
+
+                                        <div class="package-card-body">
+
+                                            <h3>{item.name}</h3>
+
+                                            <template lwc:if={item.isAirTicket}>
+                                                <p>
+                                                    {item.origin} to {item.destination}
+                                                </p>
+                                                <p>
+                                                    {item.flightType} - {item.cabinClass}
+                                                </p>
+                                            </template>
+
+                                            <template lwc:else>
+                                                <p>{item.destination}</p>
+                                            </template>
+
+                                            <p class="package-description">
+                                                {item.description}
+                                            </p>
+
+                                            <!-- HOTEL QUANTITIES -->
+
+                                            <template lwc:if={item.isHotel}>
+
+                                                <lightning-input
+                                                    type="number"
+                                                    label="Number of Rooms"
+                                                    min="1"
+                                                    step="1"
+                                                    value={item.rooms}
+                                                    data-id={item.id}
+                                                    data-field="rooms"
+                                                    onchange={handleHotelQuantityChange}
+                                                    disabled={isBookingFinalized}>
+                                                </lightning-input>
+
+                                                <lightning-input
+                                                    type="number"
+                                                    label="Number of Nights"
+                                                    min="1"
+                                                    step="1"
+                                                    value={item.nights}
+                                                    data-id={item.id}
+                                                    data-field="nights"
+                                                    onchange={handleHotelQuantityChange}
+                                                    disabled={isBookingFinalized}>
+                                                </lightning-input>
+
+                                            </template>
+
+                                            <p class="package-price">
+                                                <lightning-formatted-number
+                                                    value={item.displayPrice}
+                                                    format-style="currency"
+                                                    currency-code={item.currencyCode}>
+                                                </lightning-formatted-number>
+                                            </p>
+
+                                            <div class="card-actions">
+
+                                                <lightning-button
+                                                    label="View Details"
+                                                    data-id={item.id}
+                                                    onclick={handleSelectService}>
+                                                </lightning-button>
+
+                                                <lightning-button
+                                                    label={item.addButtonLabel}
+                                                    variant="brand"
+                                                    data-id={item.id}
+                                                    onclick={handleAddPackage}
+                                                    disabled={isBookingFinalized}>
+                                                </lightning-button>
+
+                                            </div>
+
+                                        </div>
+
+                                    </article>
+
+                                </template>
+
+                            </div>
+
+                        </template>
+
+                        <template lwc:else>
+                            <div class="empty-state">
+                                <lightning-icon
+                                    icon-name="utility:search"
+                                    size="large">
+                                </lightning-icon>
+                                <p>No products available in this category.</p>
+                            </div>
+                        </template>
+
+                    </lightning-tab>
+
+                </template>
+
+                <!-- ========================================= -->
+                <!-- PREDEFINED TRAVEL PACKAGES -->
+                <!-- ========================================= -->
+
+                <lightning-tab
+                    label="Travel Packages"
+                    value="Travel_Packages">
+
+                    <div class="travel-package-header slds-m-bottom_large">
+
+                        <h2 class="slds-text-heading_medium">
+                            Explore Complete Travel Packages
+                        </h2>
+
+                        <p class="slds-text-color_weak">
+                            Discover complete holidays with flights,
+                            hotels, transfers and additional services.
+                        </p>
 
                     </div>
 
-                    <template lwc:if={displayAirTickets.length}>
+                    <!-- PACKAGE ERROR -->
 
-                        <div class="catalogue-grid">
+                    <template lwc:if={travelPackageError}>
+                        <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_medium">
+                            {travelPackageError}
+                        </div>
+                    </template>
 
-                            <template for:each={displayAirTickets} for:item="item">
+                    <!-- PACKAGE LOADING -->
 
-                                <article key={item.id} class="package-card">
+                    <template lwc:if={isLoadingTravelPackages}>
+                        <lightning-spinner
+                            alternative-text="Loading Travel Packages">
+                        </lightning-spinner>
+                    </template>
 
-                                    <div class="package-image-wrap">
+                    <!-- PACKAGE LIST -->
+
+                    <template lwc:if={hasPredefinedTravelPackages}>
+
+                        <div class="travel-package-list">
+
+                            <template
+                                for:each={predefinedTravelPackages}
+                                for:item="item">
+
+                                <article
+                                    key={item.packageId}
+                                    class="travel-package-row">
+
+                                    <!-- COVER IMAGE -->
+
+                                    <div class="travel-package-cover">
 
                                         <template lwc:if={item.imageUrl}>
-                                            <img src={item.imageUrl} alt={item.name} class="package-image"/>
+                                            <img
+                                                src={item.imageUrl}
+                                                alt={item.name}/>
                                         </template>
 
                                         <template lwc:else>
-                                            <div class="package-image-placeholder">
-                                                <lightning-icon icon-name="utility:world" size="large"></lightning-icon>
+                                            <div class="travel-package-cover-placeholder">
+                                                <lightning-icon
+                                                    icon-name="utility:travel_and_places"
+                                                    size="large">
+                                                </lightning-icon>
                                             </div>
                                         </template>
 
                                     </div>
 
-                                    <div class="package-card-body">
+                                    <!-- PACKAGE CONTENT -->
 
-                                        <h3 class="slds-text-heading_small">
-                                            {item.name}
-                                        </h3>
+                                    <div class="travel-package-content">
 
-                                        <p>{item.origin} to {item.destination}</p>
-                                        <p>{item.flightType} - {item.cabinClass}</p>
-                                        <p class="package-description">{item.description}</p>
+                                        <div class="travel-package-title-row">
 
-                                        <p class="package-price">
-                                            <lightning-formatted-number
-                                                value={item.price}
-                                                format-style="currency"
-                                                currency-code={item.currencyCode}>
-                                            </lightning-formatted-number>
+                                            <div>
+                                                <h2>{item.name}</h2>
+                                                <p>{item.destination}</p>
+                                            </div>
+
+                                            <lightning-badge
+                                                label="Predefined Package">
+                                            </lightning-badge>
+
+                                        </div>
+
+                                        <p class="travel-package-description">
+                                            {item.description}
                                         </p>
 
-                                        <div class="slds-col">
+                                        <div class="travel-package-summary">
 
-                                            <lightning-button
-                                                label="View Details"
-                                                data-id={item.id}
-                                                onclick={handleSelectService}>
-                                            </lightning-button>
+                                            <span>
+                                                {item.productCount} Included Products
+                                            </span>
 
-                                            <lightning-button
-                                                label="Add Flight"
-                                                variant="brand"
-                                                data-id={item.id}
-                                                onclick={handleAddPackage}>
-                                            </lightning-button>
+                                            <span>
+                                                {item.discount}% Discount
+                                            </span>
+
+                                        </div>
+
+                                        <!-- INCLUDED PRODUCT ROWS -->
+
+                                        <div class="included-products">
+
+                                            <h3>Package Includes</h3>
+
+                                            <template
+                                                for:each={item.items}
+                                                for:item="product">
+
+                                                <div
+                                                    key={product.productId}
+                                                    class="included-product-row">
+
+                                                    <div class="included-product-image">
+
+                                                        <template lwc:if={product.imageUrl}>
+                                                            <img
+                                                                src={product.imageUrl}
+                                                                alt={product.name}/>
+                                                        </template>
+
+                                                        <template lwc:else>
+                                                            <lightning-icon
+                                                                icon-name="utility:product"
+                                                                size="small">
+                                                            </lightning-icon>
+                                                        </template>
+
+                                                    </div>
+
+                                                    <div class="included-product-info">
+
+                                                        <strong>{product.name}</strong>
+
+                                                        <p>{product.category}</p>
+
+                                                        <template lwc:if={product.destination}>
+                                                            <p>{product.destination}</p>
+                                                        </template>
+
+                                                        <template lwc:if={product.isHotel}>
+                                                            <p>
+                                                                {product.rooms} room(s),
+                                                                {product.nights} night(s)
+                                                            </p>
+                                                        </template>
+
+                                                        <template lwc:if={product.hotelDescription}>
+                                                            <p>{product.hotelDescription}</p>
+                                                        </template>
+
+                                                    </div>
+
+                                                    <div class="included-product-price">
+
+                                                        <lightning-formatted-number
+                                                            value={product.discountedLineTotal}
+                                                            format-style="currency"
+                                                            currency-code={item.currencyCode}>
+                                                        </lightning-formatted-number>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </template>
+
+                                        </div>
+
+                                        <!-- PACKAGE FOOTER -->
+
+                                        <div class="travel-package-footer">
+
+                                            <div>
+                                                <span>Package Total</span>
+
+                                                <strong class="travel-package-price">
+                                                    <lightning-formatted-number
+                                                        value={item.displayPrice}
+                                                        format-style="currency"
+                                                        currency-code={item.currencyCode}>
+                                                    </lightning-formatted-number>
+                                                </strong>
+                                            </div>
+
+                                            <div class="travel-package-actions">
+
+                                                <lightning-button
+                                                    label="View Details"
+                                                    variant="neutral"
+                                                    data-id={item.packageId}
+                                                    onclick={handleViewTravelPackage}>
+                                                </lightning-button>
+
+                                                <lightning-button
+                                                    label="Add Complete Package"
+                                                    variant="brand"
+                                                    icon-name="utility:add"
+                                                    data-id={item.packageId}
+                                                    onclick={handleAddTravelPackage}
+                                                    disabled={isBookingFinalized}>
+                                                </lightning-button>
+
+                                            </div>
 
                                         </div>
 
@@ -175,267 +531,152 @@
 
                     </template>
 
-                    <template lwc:else>
+                    <!-- EMPTY STATE -->
+
+                    <template lwc:if={showTravelPackageEmptyState}>
+
                         <div class="empty-state">
-                            No Air Tickets found.
+
+                            <lightning-icon
+                                icon-name="utility:travel_and_places"
+                                size="large">
+                            </lightning-icon>
+
+                            <p>No active Travel Packages are currently available.</p>
+
                         </div>
+
                     </template>
 
-                </lightning-tab>
+                    <!-- ================================= -->
+                    <!-- VIEW PACKAGE DETAILS -->
+                    <!-- ================================= -->
 
-                <!-- HOTELS -->
+                    <template lwc:if={selectedTravelPackage}>
 
-                <lightning-tab label="Hotels" value="Hotels">
+                        <section class="travel-package-details slds-m-top_large">
 
-                    <div class="slds-box slds-m-bottom_medium">
+                            <div class="details-heading">
 
-                        <h3 class="slds-text-heading_small">
-                            Find Hotels
-                        </h3>
+                                <h2>Complete Package Details</h2>
 
-                        <lightning-combobox
-                            label="Destination"
-                            value={hotelDestinationFilter}
-                            options={destinationOptions}
-                            data-field="hotelDestinationFilter"
-                            onchange={handleFilterChange}>
-                        </lightning-combobox>
+                                <lightning-button-icon
+                                    icon-name="utility:close"
+                                    alternative-text="Close"
+                                    onclick={handleCloseTravelPackageDetails}>
+                                </lightning-button-icon>
 
-                        <lightning-input
-                            type="search"
-                            label="Search Hotels"
-                            value={hotelSearchKeyword}
-                            data-field="hotelSearchKeyword"
-                            onchange={handleFilterChange}>
-                        </lightning-input>
+                            </div>
 
-                        <lightning-button
-                            label="Clear Hotel Search"
-                            onclick={handleClearHotelFilters}>
-                        </lightning-button>
+                            <div class="travel-details-header">
 
-                    </div>
+                                <template lwc:if={selectedTravelPackage.imageUrl}>
+                                    <img
+                                        src={selectedTravelPackage.imageUrl}
+                                        alt={selectedTravelPackage.name}
+                                        class="travel-details-cover"/>
+                                </template>
 
-                    <template lwc:if={displayHotels.length}>
+                                <div>
+                                    <h3>{selectedTravelPackage.name}</h3>
+                                    <p>{selectedTravelPackage.destination}</p>
+                                    <p>{selectedTravelPackage.description}</p>
+                                </div>
 
-                        <div class="package-grid">
+                            </div>
 
-                            <template for:each={displayHotels} for:item="item">
+                            <h3 class="slds-m-top_large">
+                                Included Products
+                            </h3>
 
-                                <article key={item.id} class="package-card">
+                            <div class="package-detail-products">
 
-                                    <div class="package-image-wrap">
+                                <template
+                                    for:each={selectedTravelPackage.items}
+                                    for:item="product">
 
-                                        <template lwc:if={item.imageUrl}>
-                                            <img src={item.imageUrl} alt={item.name} class="package-image"/>
-                                        </template>
+                                    <div
+                                        key={product.productId}
+                                        class="included-product-row">
 
-                                        <template lwc:else>
-                                            <div class="package-image-placeholder">
-                                                <lightning-icon icon-name="utility:home" size="large"></lightning-icon>
-                                            </div>
-                                        </template>
+                                        <div class="included-product-image">
 
-                                    </div>
+                                            <template lwc:if={product.imageUrl}>
+                                                <img
+                                                    src={product.imageUrl}
+                                                    alt={product.name}/>
+                                            </template>
 
-                                    <div class="package-card-body">
+                                            <template lwc:else>
+                                                <lightning-icon
+                                                    icon-name="utility:product"
+                                                    size="small">
+                                                </lightning-icon>
+                                            </template>
 
-                                        <h3>{item.name}</h3>
+                                        </div>
 
-                                        <p>{item.destination}</p>
-                                        <p>{item.description}</p>
+                                        <div class="included-product-info">
 
-                                        <lightning-input
-                                            type="number"
-                                            label="Number of Rooms"
-                                            min="1"
-                                            step="1"
-                                            value={item.rooms}
-                                            data-id={item.id}
-                                            data-field="rooms"
-                                            onchange={handleHotelQuantityChange}>
-                                        </lightning-input>
+                                            <strong>{product.name}</strong>
+                                            <p>{product.category}</p>
+                                            <p>{product.destination}</p>
+                                            <p>{product.description}</p>
 
-                                        <lightning-input
-                                            type="number"
-                                            label="Number of Nights"
-                                            min="1"
-                                            step="1"
-                                            value={item.nights}
-                                            data-id={item.id}
-                                            data-field="nights"
-                                            onchange={handleHotelQuantityChange}>
-                                        </lightning-input>
+                                        </div>
 
-                                        <p class="package-price">
-                                            Total:
+                                        <div class="included-product-price">
+
                                             <lightning-formatted-number
-                                                value={item.calculatedPrice}
+                                                value={product.discountedLineTotal}
                                                 format-style="currency"
-                                                currency-code={item.currencyCode}>
+                                                currency-code={selectedTravelPackage.currencyCode}>
                                             </lightning-formatted-number>
-                                        </p>
 
-                                        <lightning-button
-                                            label="Add Hotel"
-                                            variant="brand"
-                                            data-id={item.id}
-                                            onclick={handleAddPackage}>
-                                        </lightning-button>
+                                        </div>
 
                                     </div>
 
-                                </article>
+                                </template>
 
-                            </template>
+                            </div>
 
-                        </div>
+                            <div class="travel-package-footer">
 
-                    </template>
+                                <div>
+                                    <span>Final Package Price</span>
 
-                    <template lwc:else>
-                        <div class="empty-state">
-                            No Hotels found.
-                        </div>
-                    </template>
+                                    <strong class="travel-package-price">
+                                        <lightning-formatted-number
+                                            value={selectedTravelPackage.displayPrice}
+                                            format-style="currency"
+                                            currency-code={selectedTravelPackage.currencyCode}>
+                                        </lightning-formatted-number>
+                                    </strong>
+                                </div>
 
-                </lightning-tab>
+                                <lightning-button
+                                    label="Add Complete Package"
+                                    variant="brand"
+                                    icon-name="utility:add"
+                                    data-id={selectedTravelPackage.packageId}
+                                    onclick={handleAddTravelPackage}
+                                    disabled={isBookingFinalized}>
+                                </lightning-button>
 
-                <!-- GROUND TRANSFERS -->
+                            </div>
 
-                <lightning-tab label="Ground Transfers" value="Ground">
+                        </section>
 
-                    <template lwc:if={displayTransfers.length}>
-
-                        <div class="package-grid">
-
-                            <template for:each={displayTransfers} for:item="item">
-
-                                <article key={item.id} class="package-card">
-
-                                    <div class="package-image-wrap">
-                                        <template lwc:if={item.imageUrl}>
-                                            <img src={item.imageUrl} alt={item.name} class="package-image"/>
-                                        </template>
-                                        <template lwc:else>
-                                            <lightning-icon icon-name="utility:travel_and_places" size="large"></lightning-icon>
-                                        </template>
-                                    </div>
-
-                                    <div class="package-card-body">
-
-                                        <h3>{item.name}</h3>
-                                        <p>{item.destination}</p>
-                                        <p>{item.description}</p>
-
-                                        <p class="package-price">
-                                            <lightning-formatted-number
-                                                value={item.price}
-                                                format-style="currency"
-                                                currency-code={item.currencyCode}>
-                                            </lightning-formatted-number>
-                                        </p>
-
-                                        <lightning-button
-                                            label="View Details"
-                                            data-id={item.id}
-                                            onclick={handleSelectService}>
-                                        </lightning-button>
-
-                                        <lightning-button
-                                            label="Add Transfer"
-                                            variant="brand"
-                                            data-id={item.id}
-                                            onclick={handleAddPackage}>
-                                        </lightning-button>
-
-                                    </div>
-
-                                </article>
-
-                            </template>
-
-                        </div>
-
-                    </template>
-
-                    <template lwc:else>
-                        <div class="empty-state">
-                            No Ground Transfers found.
-                        </div>
-                    </template>
-
-                </lightning-tab>
-
-                <!-- ANCILLARY SERVICES -->
-
-                <lightning-tab label="Ancillary Services" value="Ancillary">
-
-                    <template lwc:if={displayAncillaries.length}>
-
-                        <div class="package-grid">
-
-                            <template for:each={displayAncillaries} for:item="item">
-
-                                <article key={item.id} class="package-card">
-
-                                    <div class="package-image-wrap">
-                                        <template lwc:if={item.imageUrl}>
-                                            <img src={item.imageUrl} alt={item.name} class="package-image"/>
-                                        </template>
-                                        <template lwc:else>
-                                            <lightning-icon icon-name="utility:apps" size="large"></lightning-icon>
-                                        </template>
-                                    </div>
-
-                                    <div class="package-card-body">
-
-                                        <h3>{item.name}</h3>
-                                        <p>{item.destination}</p>
-                                        <p>{item.description}</p>
-
-                                        <p class="package-price">
-                                            <lightning-formatted-number
-                                                value={item.price}
-                                                format-style="currency"
-                                                currency-code={item.currencyCode}>
-                                            </lightning-formatted-number>
-                                        </p>
-
-                                        <lightning-button
-                                            label="View Details"
-                                            data-id={item.id}
-                                            onclick={handleSelectService}>
-                                        </lightning-button>
-
-                                        <lightning-button
-                                            label="Add Service"
-                                            variant="brand"
-                                            data-id={item.id}
-                                            onclick={handleAddPackage}>
-                                        </lightning-button>
-
-                                    </div>
-
-                                </article>
-
-                            </template>
-
-                        </div>
-
-                    </template>
-
-                    <template lwc:else>
-                        <div class="empty-state">
-                            No Ancillary Services found.
-                        </div>
                     </template>
 
                 </lightning-tab>
 
             </lightning-tabset>
 
-            <!-- PRODUCT DETAILS -->
+            <!-- ========================================= -->
+            <!-- INDIVIDUAL PRODUCT DETAILS -->
+            <!-- ========================================= -->
 
             <template lwc:if={selectedService}>
 
@@ -456,8 +697,14 @@
                     <h3>{selectedService.name}</h3>
 
                     <p>{selectedService.description}</p>
-                    <p>Destination: {selectedService.destination}</p>
-                    <p>Supplier: {selectedService.supplier}</p>
+
+                    <p>
+                        Destination: {selectedService.destination}
+                    </p>
+
+                    <p>
+                        Supplier: {selectedService.supplier}
+                    </p>
 
                     <p class="package-price">
                         <lightning-formatted-number
@@ -471,14 +718,17 @@
                         label="Add This Product"
                         variant="brand"
                         data-id={selectedService.id}
-                        onclick={handleAddPackage}>
+                        onclick={handleAddPackage}
+                        disabled={isBookingFinalized}>
                     </lightning-button>
 
                 </section>
 
             </template>
 
+            <!-- ========================================= -->
             <!-- MY TRAVEL PACKAGE -->
+            <!-- ========================================= -->
 
             <section class="selected-package-section slds-m-top_x-large">
 
@@ -533,6 +783,12 @@
                                         <p>{service.hotelDescription}</p>
                                     </template>
 
+                                    <template lwc:if={service.travelPackageLabel}>
+                                        <p class="selected-package-label">
+                                            Part of: {service.travelPackageLabel}
+                                        </p>
+                                    </template>
+
                                 </div>
 
                                 <div class="selected-service-price">
@@ -549,7 +805,8 @@
                                         icon-name="utility:delete"
                                         alternative-text="Remove"
                                         data-id={service.id}
-                                        onclick={handleRemoveService}>
+                                        onclick={handleRemoveService}
+                                        disabled={isBookingFinalized}>
                                     </lightning-button-icon>
 
                                 </div>
@@ -560,6 +817,8 @@
 
                     </div>
 
+                    <!-- TOTAL -->
+
                     <div class="total-panel slds-m-top_medium">
 
                         <span class="slds-text-heading_medium">
@@ -567,16 +826,16 @@
                         </span>
 
                         <strong>
-
                             <lightning-formatted-number
                                 value={totalPrice}
                                 format-style="currency"
                                 currency-code={totalCurrencyCode}>
                             </lightning-formatted-number>
-
                         </strong>
 
                     </div>
+
+                    <!-- SAVE STATUS -->
 
                     <template lwc:if={hasUnsavedChanges}>
 
@@ -593,6 +852,8 @@
                         </div>
 
                     </template>
+
+                    <!-- PACKAGE ACTIONS -->
 
                     <div class="slds-m-top_medium">
 
@@ -614,14 +875,17 @@
                     </div>
 
                     <template lwc:if={isSaving}>
-                        <lightning-spinner alternative-text="Saving package"></lightning-spinner>
+                        <lightning-spinner alternative-text="Saving package">
+                        </lightning-spinner>
                     </template>
 
                 </template>
 
             </section>
 
+            <!-- ========================================= -->
             <!-- VISA VERIFICATION -->
+            <!-- ========================================= -->
 
             <section class="visa-section slds-box slds-theme_default slds-m-top_x-large">
 
@@ -634,12 +898,11 @@
                 </p>
 
                 <template lwc:if={isCheckingVisa}>
-
-                    <lightning-spinner
-                        alternative-text="Checking Visa">
+                    <lightning-spinner alternative-text="Checking Visa">
                     </lightning-spinner>
-
                 </template>
+
+                <!-- VISA SUMMARY -->
 
                 <template lwc:if={visaSummary}>
 
@@ -672,10 +935,8 @@
                 <template lwc:if={showVisaPendingInformation}>
 
                     <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-top_medium">
-
                         Visa verification has not been completed.
                         Save your Travel Package and click Check Visa Requirements.
-
                     </div>
 
                 </template>
@@ -683,9 +944,7 @@
                 <template lwc:if={showVisaFreeInformation}>
 
                     <div class="slds-notify slds-notify_alert slds-alert_success slds-m-top_medium">
-
                         Visa Free. Review the allowed stay, passport validity and destination entry requirements.
-
                     </div>
 
                 </template>
@@ -696,11 +955,10 @@
 
                     <article key={item.Id} class="visa-checklist-card slds-m-top_medium">
 
-                        <h3>
-                            {item.Destination_Country__c}
-                        </h3>
+                        <h3>{item.Destination_Country__c}</h3>
 
-                        <lightning-badge label="Visa Free"></lightning-badge>
+                        <lightning-badge label="Visa Free">
+                        </lightning-badge>
 
                         <p>
                             <strong>Allowed Stay:</strong>
@@ -738,7 +996,8 @@
                                     Destination: {item.Destination_Country__c}
                                 </h3>
 
-                                <lightning-badge label={item.Status__c}></lightning-badge>
+                                <lightning-badge label={item.Status__c}>
+                                </lightning-badge>
 
                                 <p>Visa Type: {item.Visa_Type__c}</p>
                                 <p>Allowed Stay: {item.Allowed_Stay__c}</p>
@@ -753,7 +1012,8 @@
                                             value={item.applicationReference}
                                             data-id={item.Id}
                                             data-field="applicationReference"
-                                            onchange={handleVisaFieldChange}>
+                                            onchange={handleVisaFieldChange}
+                                            disabled={item.isApproved}>
                                         </lightning-input>
 
                                     </div>
@@ -780,7 +1040,8 @@
                                             value={item.appointmentDate}
                                             data-id={item.Id}
                                             data-field="appointmentDate"
-                                            onchange={handleVisaFieldChange}>
+                                            onchange={handleVisaFieldChange}
+                                            disabled={item.isApproved}>
                                         </lightning-input>
 
                                     </div>
@@ -793,7 +1054,8 @@
                                             value={item.submissionDate}
                                             data-id={item.Id}
                                             data-field="submissionDate"
-                                            onchange={handleVisaFieldChange}>
+                                            onchange={handleVisaFieldChange}
+                                            disabled={item.isApproved}>
                                         </lightning-input>
 
                                     </div>
@@ -806,7 +1068,8 @@
                                             value={item.decisionDate}
                                             data-id={item.Id}
                                             data-field="decisionDate"
-                                            onchange={handleVisaFieldChange}>
+                                            onchange={handleVisaFieldChange}
+                                            disabled={item.isApproved}>
                                         </lightning-input>
 
                                     </div>
@@ -818,7 +1081,8 @@
                                             value={item.comments}
                                             data-id={item.Id}
                                             data-field="comments"
-                                            onchange={handleVisaFieldChange}>
+                                            onchange={handleVisaFieldChange}
+                                            disabled={item.isApproved}>
                                         </lightning-input>
 
                                     </div>
@@ -829,68 +1093,84 @@
                                     Required Documents
                                 </h4>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Passport Copy Received"
                                     checked={item.passportCopyReceived}
                                     data-id={item.Id}
                                     data-field="passportCopyReceived"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Passport Photo Received"
                                     checked={item.passportPhotoReceived}
                                     data-id={item.Id}
                                     data-field="passportPhotoReceived"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Application Form Completed"
                                     checked={item.applicationFormCompleted}
                                     data-id={item.Id}
                                     data-field="applicationFormCompleted"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Flight Itinerary Received"
                                     checked={item.flightItineraryReceived}
                                     data-id={item.Id}
                                     data-field="flightItineraryReceived"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Hotel Confirmation Received"
                                     checked={item.hotelConfirmationReceived}
                                     data-id={item.Id}
                                     data-field="hotelConfirmationReceived"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Travel Insurance Received"
                                     checked={item.travelInsuranceReceived}
                                     data-id={item.Id}
                                     data-field="travelInsuranceReceived"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Financial Proof Received"
                                     checked={item.financialProofReceived}
                                     data-id={item.Id}
                                     data-field="financialProofReceived"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
-                                <lightning-input type="checkbox"
+                                <lightning-input
+                                    type="checkbox"
                                     label="Appointment Completed"
                                     checked={item.appointmentCompleted}
                                     data-id={item.Id}
                                     data-field="appointmentCompleted"
-                                    onchange={handleVisaFieldChange}>
+                                    onchange={handleVisaFieldChange}
+                                    disabled={item.isApproved}>
                                 </lightning-input>
 
                                 <lightning-button
@@ -910,98 +1190,380 @@
 
                 </template>
 
-                <!-- PAYMENT -->
+            </section>
 
-<!-- PAYMENT SECTION -->
+            <!-- ========================================= -->
+            <!-- PAYMENT INFORMATION -->
+            <!-- ========================================= -->
 
-<div class="payment-panel slds-m-top_large">
+            <section class="payment-panel slds-m-top_large">
 
-    <h2 class="slds-text-heading_medium">
-        Payment Information
-    </h2>
+                <h2 class="slds-text-heading_medium">
+                    Payment Information
+                </h2>
 
-    <lightning-combobox
-        label="Payment Method"
-        value={paymentMethod}
-        options={paymentMethodOptions}
-        onchange={handlePaymentMethodChange}
-        disabled={paymentCreated}>
-    </lightning-combobox>
+                <lightning-radio-group
+                    label="Payment Structure"
+                    options={paymentStructureOptions}
+                    value={paymentStructure}
+                    onchange={handlePaymentStructureChange}
+                    type="radio"
+                    disabled={paymentCreated}>
+                </lightning-radio-group>
 
-    <template if:true={showPaymentDetails}>
-        <c-payment-details
-            payment-method={paymentMethod}>
-        </c-payment-details>
-    </template>
+                <lightning-combobox
+                    class="slds-m-top_medium"
+                    label="Payment Method"
+                    value={paymentMethod}
+                    options={paymentMethodOptions}
+                    onchange={handlePaymentMethodChange}
+                    disabled={paymentCreated}>
+                </lightning-combobox>
 
-    <div class="payment-actions slds-m-top_large">
+                <template lwc:if={showPaymentDetails}>
 
-        <lightning-button
-            label="Create Single Payment"
-            variant="brand"
-            onclick={handleRecordPayment}
-            disabled={paymentButtonDisabled}>
-        </lightning-button>
+                    <c-payment-details
+                        payment-method={paymentMethod}>
+                    </c-payment-details>
 
-    </div>
+                </template>
 
-    <template if:true={paymentCreated}>
-
-        <div class="slds-notify slds-notify_alert
-                    slds-alert_success slds-m-top_medium">
-            Payment created successfully.
-            Payment ID: {paymentId}
-        </div>
-
-        <lightning-radio-group
-            label="Payment Structure"
-            options={paymentStructureOptions}
-            value={paymentStructure}
-            onchange={handlePaymentStructureChange}
-            type="radio">
-        </lightning-radio-group>
-
-        <template if:true={installmentRequired}>
-
-            <lightning-button
-                label="Create 3 Installments"
-                variant="brand"
-                onclick={handleCreateInstallments}
-                disabled={installmentButtonDisabled}
-                class="slds-m-top_medium">
-            </lightning-button>
-
-        </template>
-
-    </template>
-
-</div>
-
-
-
-                <!-- QUOTE -->
-
-                <div class="slds-m-top_large">
+                <div class="payment-actions slds-m-top_large">
 
                     <lightning-button
+                        label="Create Payment"
                         variant="brand"
-                        label="Create Quote"
-                        onclick={handleCreateQuote}
-                        disabled={createQuoteDisabled}>
+                        onclick={handleRecordPayment}
+                        disabled={paymentButtonDisabled}>
                     </lightning-button>
 
+                </div>
 
-                    <template lwc:if={quoteButtonDisabled}>
+                <template lwc:if={paymentCreated}>
 
-                        <p class="slds-text-color_error slds-m-top_small">
-                            {quoteBlockReason}
-                        </p>
+                    <div class="slds-notify slds-notify_alert slds-alert_success slds-m-top_medium">
+
+                        <strong>Payment created successfully.</strong>
+
+                        <p>Payment ID: {paymentId}</p>
+                        <p>Payment Structure: {paymentStructure}</p>
+
+                    </div>
+
+                </template>
+
+                <!-- INSTALLMENTS -->
+
+                <template lwc:if={installmentRequired}>
+
+                    <div class="installment-panel slds-m-top_medium">
+
+                        <h3 class="slds-text-heading_small">
+                            Installment Schedule
+                        </h3>
+
+                        <p>First installment: 25%</p>
+                        <p>Second installment: 35%</p>
+                        <p>Final installment: 40%</p>
+
+                        <lightning-button
+                            label="Create 3 Installments"
+                            variant="brand"
+                            onclick={handleCreateInstallments}
+                            disabled={installmentButtonDisabled}
+                            class="slds-m-top_medium">
+                        </lightning-button>
+
+                        <template lwc:if={installmentsCreated}>
+
+                            <div class="slds-m-top_medium">
+                                <lightning-badge
+                                    label="Three Installments Created">
+                                </lightning-badge>
+                            </div>
+
+                        </template>
+
+                    </div>
+
+                </template>
+
+                <!-- FULL PAYMENT -->
+
+                <template lwc:if={isSinglePayment}>
+
+                    <div class="slds-notify slds-notify_alert slds-alert_info slds-m-top_medium">
+                        Full Payment selected. The customer pays 100% in one payment.
+                        No installments are required.
+                    </div>
+
+                </template>
+
+            </section>
+
+
+        <!-- ========================================= -->
+        <!-- QUOTE AND BOOKING DECISION -->
+        <!-- ========================================= -->
+
+        <section class="quote-panel slds-m-top_large">
+
+            <h2 class="slds-text-heading_medium">
+                Booking Quote
+            </h2>
+
+            <lightning-button
+                variant="brand"
+                label="Create Quote"
+                onclick={handleCreateQuote}
+                disabled={createQuoteDisabled}>
+            </lightning-button>
+
+            <!-- QUOTE CREATED -->
+
+            <template lwc:if={quoteCreated}>
+
+                <div class="slds-notify slds-notify_alert slds-alert_success slds-m-top_medium">
+
+                    <strong>Quote successfully created.</strong>
+
+                    <p>Quote ID: {quoteId}</p>
+
+                    <p>
+                        Quote Status: {quoteStatus}
+                    </p>
+
+                </div>
+
+                <!-- BOOKING DECISION -->
+
+                <div class="booking-decision-panel slds-m-top_large">
+
+                    <h2 class="slds-text-heading_medium">
+                        Booking Decision
+                    </h2>
+
+                    <!-- CONFIRMED -->
+
+                    <template lwc:if={isConfirmed}>
+
+                        <div class="booking-completed slds-m-top_medium">
+
+                            <lightning-icon
+                                icon-name="utility:success"
+                                variant="success"
+                                size="small">
+                            </lightning-icon>
+
+                            Booking Confirmed Successfully.
+
+                        </div>
+
+                    </template>
+
+                    <!-- COMPLETED -->
+
+                    <template lwc:if={isCompleted}>
+
+                        <div class="booking-completed slds-m-top_medium">
+
+                            <lightning-icon
+                                icon-name="utility:success"
+                                variant="success"
+                                size="small">
+                            </lightning-icon>
+
+                            Booking Completed Successfully.
+
+                        </div>
+
+                    </template>
+
+                    <!-- CANCELLED -->
+
+                    <template lwc:if={isCancelled}>
+
+                        <div class="booking-cancelled slds-m-top_medium">
+
+                            <lightning-icon
+                                icon-name="utility:error"
+                                variant="error"
+                                size="small">
+                            </lightning-icon>
+
+                            Booking Cancelled.
+
+                        </div>
+
+                    </template>
+
+                    <!-- PAYMENT VERIFICATION -->
+
+                    <template lwc:if={showBookingDecisionButtons}>
+
+                        <div class="slds-box slds-m-vertical_medium">
+
+                            <h3 class="slds-text-heading_small slds-m-bottom_medium">
+                                Payment Verification
+                            </h3>
+
+                            <p>
+                                <strong>Booking Stage:</strong>
+                                {Stage}
+                            </p>
+
+                            <p>
+                                <strong>Payment Structure:</strong>
+                                {paymentStructure}
+                            </p>
+
+                            <p>
+                                <strong>Parent Payment Status:</strong>
+                                {paymentStatus}
+                            </p>
+
+                            <p>
+                                <strong>Quote Status:</strong>
+                                {quoteStatus}
+                            </p>
+
+                            <p>
+                                <strong>Quote Synchronization:</strong>
+
+                                <template lwc:if={quoteIsSyncing}>
+                                    Synchronized
+                                </template>
+
+                                <template lwc:else>
+                                    Not synchronized
+                                </template>
+
+                            </p>
+
+                            <!-- INSTALLMENT DETAILS -->
+
+                            <template lwc:if={installmentRequired}>
+
+                                <div class="slds-m-top_medium">
+
+                                    <h3 class="slds-text-heading_small">
+                                        Deposit Information
+                                    </h3>
+
+                                    <p>
+                                        Deposit Amount:
+
+                                        <lightning-formatted-number
+                                            value={depositAmount}
+                                            format-style="currency"
+                                            currency-code={totalCurrencyCode}>
+                                        </lightning-formatted-number>
+                                    </p>
+
+                                    <p>
+                                        Deposit Received:
+
+                                        <lightning-formatted-number
+                                            value={depositPaidAmount}
+                                            format-style="currency"
+                                            currency-code={totalCurrencyCode}>
+                                        </lightning-formatted-number>
+                                    </p>
+
+                                    <p>
+                                        Deposit Status:
+                                        {depositStatus}
+                                    </p>
+
+                                </div>
+
+                            </template>
+
+                        </div>
+
+                        <!-- ELIGIBLE -->
+
+                        <template lwc:if={canConfirmBooking}>
+
+                            <div class="slds-notify slds-notify_alert slds-alert_success slds-m-bottom_medium">
+
+                                <lightning-icon
+                                    icon-name="utility:success"
+                                    size="x-small"
+                                    variant="success">
+                                </lightning-icon>
+
+                                Required payment has been received.
+                                This Booking is eligible for confirmation.
+
+                            </div>
+
+                        </template>
+
+                        <!-- NOT ELIGIBLE -->
+
+                        <template lwc:else>
+
+                            <div class="slds-notify slds-notify_alert slds-alert_warning slds-m-bottom_medium">
+
+                                Booking confirmation is blocked.
+
+                                <template lwc:if={isSinglePayment}>
+                                    Full Payment must be marked Completed.
+                                </template>
+
+                                <template lwc:if={installmentRequired}>
+                                    The 25% deposit must be fully paid.
+                                </template>
+
+                                The Quote must also be accepted and synchronized.
+
+                            </div>
+
+                        </template>
+
+                        <!-- ACTION BUTTONS -->
+
+                        <div class="booking-decision-actions">
+
+                            <lightning-button
+                                label="Confirm Booking"
+                                variant="brand"
+                                icon-name="utility:check"
+                                onclick={handleConfirmBooking}
+                                disabled={confirmButtonDisabled}
+                                class="slds-m-right_small">
+                            </lightning-button>
+
+                            <lightning-button
+                                label="Cancel Booking"
+                                variant="destructive"
+                                icon-name="utility:close"
+                                onclick={handleCancelBooking}
+                                disabled={isSaving}>
+                            </lightning-button>
+
+                        </div>
 
                     </template>
 
                 </div>
 
-            </section>
+            </template>
+
+            <!-- QUOTE BLOCK REASON -->
+
+            <template lwc:if={quoteButtonDisabled}>
+
+                <p class="slds-text-color_error slds-m-top_small">
+                    {quoteBlockReason}
+                </p>
+
+            </template>
+
+        </section>
+
+
 
         </div>
 

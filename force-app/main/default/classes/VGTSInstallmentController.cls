@@ -26,176 +26,82 @@ public with sharing class VGTSInstallmentController {
     // FLOW ACTION: PROCESS ACCEPTED QUOTES
     // =====================================================
 
-    @InvocableMethod(
-        label='Create Booking Deposit Installment'
-        description='Creates the 25 percent deposit installment when a Quote is accepted.'
-    )
-    public static void processAcceptedQuotes(
-        List<QuoteRequest> requests
-    ) {
+    
+@InvocableMethod(
+    label='Move Accepted VGTS Quote to Payment Stage'
+    description='Moves an accepted and synchronized Quote Booking to Payment.'
+)
+public static void processAcceptedQuotes(
+    List<QuoteRequest> requests
+) {
+    if (requests == null || requests.isEmpty()) {
+        return;
+    }
 
-        if (requests == null || requests.isEmpty()) {
-            return;
-        }
+    Set<Id> quoteIds = new Set<Id>();
 
-        Set<Id> quoteIds = new Set<Id>();
-
-        for (QuoteRequest request : requests) {
-
-            if (request != null && request.quoteId != null) {
-                quoteIds.add(request.quoteId);
-            }
-        }
-
-        if (quoteIds.isEmpty()) {
-            return;
-        }
-
-        Map<Id, Quote> quotesById = new Map<Id, Quote>([
-            SELECT Id, Name, OpportunityId, Status
-            FROM Quote
-            WHERE Id IN :quoteIds
-        ]);
-
-        Set<Id> bookingIds = new Set<Id>();
-
-        for (Quote quoteRecord : quotesById.values()) {
-
-            if (quoteRecord.Status != 'Accepted') {
-                continue;
-            }
-
-            if (quoteRecord.OpportunityId != null) {
-                bookingIds.add(quoteRecord.OpportunityId);
-            }
-        }
-
-        if (bookingIds.isEmpty()) {
-            return;
-        }
-
-        Map<Id, Opportunity> bookings = new Map<Id, Opportunity>([
-            SELECT Id, Name, Pricebook2Id,
-                   Departure_Date__c,
-                   Return_Date__c,
-                   Quote_Accepted_At__c,
-                   Deposit_Deadline__c,
-                   Deposit_Received_Amount__c,
-                   Installment_Scheduled_Created__c,
-                   Ticket_Issuance_Hold__c
-            FROM Opportunity
-            WHERE Id IN :bookingIds
-            FOR UPDATE
-        ]);
-
-        Map<Id, Decimal> totals = calculatePackageTotals(bookingIds);
-
-        List<Installment__c> newInstallments =
-            new List<Installment__c>();
-
-        List<Opportunity> bookingUpdates =
-            new List<Opportunity>();
-
-        Set<String> expectedKeys = new Set<String>();
-
-        for (Opportunity booking : bookings.values()) {
-            expectedKeys.add(scheduleKey(booking.Id, 1));
-        }
-
-        Map<String, Installment__c> existingByKey =
-            new Map<String, Installment__c>();
-
-        for (Installment__c existing : [
-            SELECT Id, Schedule_Key__c
-            FROM Installment__c
-            WHERE Schedule_Key__c IN :expectedKeys
-        ]) {
-            existingByKey.put(existing.Schedule_Key__c, existing);
-        }
-
-        for (Quote quoteRecord : quotesById.values()) {
-
-            if (quoteRecord.Status != 'Accepted' ||
-                quoteRecord.OpportunityId == null) {
-                continue;
-            }
-
-            Opportunity booking =
-                bookings.get(quoteRecord.OpportunityId);
-
-            if (booking == null) {
-                continue;
-            }
-
-            if (booking.Departure_Date__c == null) {
-                throw new AuraHandledException(
-                    'Enter the Booking Departure Date before accepting the Quote.'
-                );
-            }
-
-            Decimal total = totals.get(booking.Id);
-
-            if (total == null || total <= 0) {
-                throw new AuraHandledException(
-                    'The Booking has no valid saved Travel Package value.'
-                );
-            }
-
-            String key = scheduleKey(booking.Id, 1);
-
-            // Do not create the deposit twice.
-            if (existingByKey.containsKey(key)) {
-                continue;
-            }
-
-            DateTime acceptedAt =
-                booking.Quote_Accepted_At__c == null
-                    ? System.now()
-                    : booking.Quote_Accepted_At__c;
-
-            DateTime deadline = acceptedAt.addHours(48);
-
-            Decimal depositAmount = percentageAmount(
-                total,
-                DEPOSIT_PERCENT
-            );
-
-            Installment__c deposit = new Installment__c();
-
-            deposit.Booking__c = booking.Id;
-            deposit.Quote__c = quoteRecord.Id;
-            deposit.Schedule_Key__c = key;
-            deposit.Installment_Number__c = 1;
-            deposit.Installment_Type__c = 'Deposit';
-            deposit.Percentage__c = DEPOSIT_PERCENT;
-            deposit.Amount__c = depositAmount;
-            deposit.Paid_Amount__c = 0;
-            deposit.Due_Date__c = Date.newInstance(
-                deadline.year(),
-                deadline.month(),
-                deadline.day()
-            );
-            deposit.Status__c = 'Pending';
-
-            newInstallments.add(deposit);
-
-            booking.Quote_Accepted_At__c = acceptedAt;
-            booking.Deposit_Deadline__c = deadline;
-            booking.Deposit_Received_Amount__c = 0;
-            booking.Installment_Scheduled_Created__c= false;
-            booking.Ticket_Issuance_Hold__c = true;
-
-            bookingUpdates.add(booking);
-        }
-
-        if (!newInstallments.isEmpty()) {
-            insert newInstallments;
-        }
-
-        if (!bookingUpdates.isEmpty()) {
-            update bookingUpdates;
+    for (QuoteRequest request : requests) {
+        if (request != null && request.quoteId != null) {
+            quoteIds.add(request.quoteId);
         }
     }
+
+    if (quoteIds.isEmpty()) return;
+
+    List<Quote> acceptedQuotes = [
+        SELECT Id, OpportunityId, Status, IsSyncing
+        FROM Quote
+        WHERE Id IN :quoteIds
+    ];
+
+    Set<Id> bookingIds = new Set<Id>();
+
+    for (Quote q : acceptedQuotes) {
+
+        if (q.Status != 'Accepted' ||
+            q.IsSyncing != true ||
+            q.OpportunityId == null) {
+            continue;
+        }
+
+        bookingIds.add(q.OpportunityId);
+    }
+
+    if (bookingIds.isEmpty()) return;
+
+    List<Opportunity> updates = new List<Opportunity>();
+
+    for (Opportunity booking : [
+        SELECT Id, StageName, Quote_Accepted_At__c,
+               Ticket_Issuance_Hold__c
+        FROM Opportunity
+        WHERE Id IN :bookingIds
+        FOR UPDATE
+    ]) {
+
+        if (booking.StageName == 'Cancelled' ||
+            booking.StageName == 'Completed') {
+            continue;
+        }
+
+        booking.StageName = 'Payment';
+
+        if (booking.Quote_Accepted_At__c == null) {
+            booking.Quote_Accepted_At__c = System.now();
+        }
+
+        booking.Ticket_Issuance_Hold__c = true;
+
+        updates.add(booking);
+    }
+
+    if (!updates.isEmpty()) {
+        update updates;
+    }
+}
+
+
+
 
     // =====================================================
     // CREATE INSTALLMENTS 2 AND 3
@@ -443,24 +349,57 @@ public with sharing class VGTSInstallmentController {
     }
 
     
-@AuraEnabled
-public static String createInstallmentSchedule(Id bookingId) {
 
-    if (bookingId == null) {
+
+@AuraEnabled
+public static String createInstallmentSchedule(
+    Id bookingId,
+    Id paymentId
+) {
+    if (bookingId == null || paymentId == null) {
         throw new AuraHandledException(
-            'Booking ID is required.'
+            'Booking ID and Payment ID are required.'
         );
     }
 
     Opportunity booking = [
-        SELECT Id, Name, Departure_Date__c,
-               Pricebook2Id,
+        SELECT Id, Departure_Date__c, StageName,
                Installment_Scheduled_Created__c
         FROM Opportunity
         WHERE Id = :bookingId
-        LIMIT 1
         FOR UPDATE
     ];
+
+    if (booking.StageName == 'Confirmed' ||
+        booking.StageName == 'Completed' ||
+        booking.StageName == 'Cancelled') {
+        throw new AuraHandledException(
+            'This Booking cannot be modified.'
+        );
+    }
+
+    Payment__c parentPayment = [
+        SELECT Id, Booking__c, Status__c,
+               Payment_Structure__c, Amount__c,
+               Installment__c
+        FROM Payment__c
+        WHERE Id = :paymentId
+        AND Booking__c = :bookingId
+        LIMIT 1
+    ];
+
+    if (parentPayment.Installment__c != null ||
+        parentPayment.Payment_Structure__c != 'Installments') {
+        throw new AuraHandledException(
+            'A valid parent Installment Payment is required.'
+        );
+    }
+
+    if (parentPayment.Status__c != 'Pending') {
+        throw new AuraHandledException(
+            'Parent Payment must remain Pending.'
+        );
+    }
 
     if (booking.Departure_Date__c == null) {
         throw new AuraHandledException(
@@ -468,104 +407,148 @@ public static String createInstallmentSchedule(Id bookingId) {
         );
     }
 
-    Integer daysRemaining =
-        Date.today().daysBetween(booking.Departure_Date__c);
-
-    if (daysRemaining <= 45) {
+    if (Date.today().daysBetween(booking.Departure_Date__c) <= 45) {
         throw new AuraHandledException(
-            'Installments are not allowed. The departure date must be more than 45 days away.'
+            'Installments require departure more than 45 days away.'
         );
     }
 
-    if (booking.Installment_Scheduled_Created__c == true) {
-        throw new AuraHandledException(
-            'The installment schedule already exists.'
-        );
-    }
+    Map<Id, Decimal> totals =
+        calculatePackageTotals(new Set<Id>{bookingId});
 
-    List<OpportunityLineItem> products = [
-        SELECT Quantity, UnitPrice
-        FROM OpportunityLineItem
-        WHERE OpportunityId = :bookingId
-        AND Booking_Service__c = true
-    ];
+    Decimal total = totals.get(bookingId);
 
-    if (products.isEmpty()) {
+    if (total == null || total <= 0) {
         throw new AuraHandledException(
             'Save the Travel Package first.'
         );
     }
 
-    Decimal total = 0;
+    total = total.setScale(2, RoundingMode.HALF_UP);
 
-    for (OpportunityLineItem product : products) {
-        total += product.Quantity * product.UnitPrice;
-    }
-
-    if (total <= 0) {
+    if (parentPayment.Amount__c == null ||
+        parentPayment.Amount__c.setScale(2) != total) {
         throw new AuraHandledException(
-            'Invalid Travel Package total.'
+            'Payment amount does not match the Booking total.'
         );
     }
 
-    // Calculate amounts with rounding.
-    Decimal deposit = (total * 25 / 100)
-        .setScale(2, RoundingMode.HALF_UP);
+    Set<String> keys = new Set<String>{
+        scheduleKey(bookingId, 1),
+        scheduleKey(bookingId, 2),
+        scheduleKey(bookingId, 3)
+    };
 
-    Decimal second = (total * 35 / 100)
-        .setScale(2, RoundingMode.HALF_UP);
+    Map<Integer, Installment__c> existingByNumber =
+        new Map<Integer, Installment__c>();
 
-    // Final installment absorbs any rounding difference.
-    Decimal finalAmount = total - deposit - second;
+    for (Installment__c existing : [
+        SELECT Id, Booking__c, Payment__c,
+               Installment_Number__c,
+               Amount__c, Paid_Amount__c,
+               Status__c, Schedule_Key__c
+        FROM Installment__c
+        WHERE Schedule_Key__c IN :keys
+        FOR UPDATE
+    ]) {
+        Integer installmentNo =
+            existing.Installment_Number__c.intValue();
+
+        existingByNumber.put(installmentNo, existing);
+    }
+
+    Decimal deposit = percentageAmount(total, 25);
+    Decimal second = percentageAmount(total, 35);
+    Decimal finalAmount = (
+        total - deposit - second
+    ).setScale(2, RoundingMode.HALF_UP);
+
+    List<Decimal> amounts =
+        new List<Decimal>{deposit, second, finalAmount};
+
+    List<Decimal> percentages =
+        new List<Decimal>{25, 35, 40};
+
+    List<String> types = new List<String>{
+        'Deposit',
+        'Second Installment',
+        'Final Installment'
+    };
 
     Date departure = booking.Departure_Date__c;
 
-    List<Installment__c> schedule =
+    List<Date> dueDates = new List<Date>{
+        Date.today(),
+        departure.addDays(-30),
+        departure.addDays(-14)
+    };
+
+    List<Installment__c> toInsert =
         new List<Installment__c>();
 
-    schedule.add(new Installment__c(
-        Booking__c = booking.Id,
-        Schedule_Key__c = booking.Id + '-1',
-        Installment_Number__c = 1,
-        Installment_Type__c = 'Deposit',
-        Percentage__c = 25,
-        Amount__c = deposit,
-        Paid_Amount__c = 0,
-        Due_Date__c = Date.today(),
-        Status__c = 'Pending'
-    ));
+    List<Installment__c> toUpdate =
+        new List<Installment__c>();
 
-    schedule.add(new Installment__c(
-        Booking__c = booking.Id,
-        Schedule_Key__c = booking.Id + '-2',
-        Installment_Number__c = 2,
-        Installment_Type__c = 'Second Installment',
-        Percentage__c = 35,
-        Amount__c = second,
-        Paid_Amount__c = 0,
-        Due_Date__c = departure.addDays(-30),
-        Status__c = 'Pending'
-    ));
+    for (Integer i = 1; i <= 3; i++) {
 
-    schedule.add(new Installment__c(
-        Booking__c = booking.Id,
-        Schedule_Key__c = booking.Id + '-3',
-        Installment_Number__c = 3,
-        Installment_Type__c = 'Final Installment',
-        Percentage__c = 40,
-        Amount__c = finalAmount,
-        Paid_Amount__c = 0,
-        Due_Date__c = departure.addDays(-14),
-        Status__c = 'Pending'
-    ));
+        Installment__c existing = existingByNumber.get(i);
 
-    insert schedule;
+        if (existing != null) {
+
+            if (existing.Booking__c != bookingId) {
+                throw new AuraHandledException(
+                    'Existing installment belongs to another Booking.'
+                );
+            }
+
+            if (existing.Payment__c != null &&
+                existing.Payment__c != paymentId) {
+                throw new AuraHandledException(
+                    'Existing installment is linked to another Payment.'
+                );
+            }
+
+            if (existing.Payment__c == null) {
+                existing.Payment__c = paymentId;
+                toUpdate.add(existing);
+            }
+
+        } else {
+
+            Installment__c item = new Installment__c();
+
+            item.Booking__c = bookingId;
+            item.Payment__c = paymentId;
+            item.Schedule_Key__c = scheduleKey(bookingId, i);
+            item.Installment_Number__c = i;
+            item.Installment_Type__c = types[i - 1];
+            item.Percentage__c = percentages[i - 1];
+            item.Amount__c = amounts[i - 1];
+            item.Paid_Amount__c = 0;
+            item.Due_Date__c = dueDates[i - 1];
+            item.Status__c = 'Pending';
+
+            toInsert.add(item);
+        }
+    }
+
+    if (!toUpdate.isEmpty()) {
+        update toUpdate;
+    }
+
+    if (!toInsert.isEmpty()) {
+        insert toInsert;
+    }
 
     booking.Installment_Scheduled_Created__c = true;
     update booking;
 
-    return 'Three installments created successfully.';
+    return 'Three installments created successfully: 25%, 35%, and 40%.';
 }
+
+
+
+
 
 
 }

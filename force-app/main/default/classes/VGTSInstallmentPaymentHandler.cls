@@ -3,10 +3,6 @@ public with sharing class VGTSInstallmentPaymentHandler {
 
     private static Boolean isProcessing = false;
 
-    // =====================================================
-    // AFTER INSERT / UPDATE / DELETE / UNDELETE
-    // =====================================================
-
     public static void processPayments(
         List<Payment__c> newPayments,
         List<Payment__c> oldPayments
@@ -20,47 +16,39 @@ public with sharing class VGTSInstallmentPaymentHandler {
 
             Set<Id> installmentIds = new Set<Id>();
 
-            // New or updated payments.
             if (newPayments != null) {
-                for (Payment__c payment : newPayments) {
-
-                    if (payment.Installment__c != null) {
-                        installmentIds.add(payment.Installment__c);
+                for (Payment__c p : newPayments) {
+                    if (p.Installment__c != null) {
+                        installmentIds.add(p.Installment__c);
                     }
                 }
             }
 
-            // Old relationships are also required when a payment
-            // is moved to another installment or deleted.
             if (oldPayments != null) {
-                for (Payment__c payment : oldPayments) {
-
-                    if (payment.Installment__c != null) {
-                        installmentIds.add(payment.Installment__c);
+                for (Payment__c p : oldPayments) {
+                    if (p.Installment__c != null) {
+                        installmentIds.add(p.Installment__c);
                     }
                 }
             }
 
             if (installmentIds.isEmpty()) return;
 
-            // Retrieve the affected installments.
             Map<Id, Installment__c> installments =
                 new Map<Id, Installment__c>([
-                    SELECT Id,
-                           Booking__c,
+                    SELECT Id, Booking__c,
                            Installment_Number__c,
-                           Amount__c,
-                           Paid_Amount__c,
+                           Amount__c, Paid_Amount__c,
                            Status__c
                     FROM Installment__c
                     WHERE Id IN :installmentIds
+                    FOR UPDATE
                 ]);
 
-            // Calculate actual completed payments.
             Map<Id, Decimal> paidAmounts =
                 new Map<Id, Decimal>();
 
-            for (AggregateResult result : [
+            for (AggregateResult ar : [
                 SELECT Installment__c installmentId,
                        SUM(Amount__c) totalPaid
                 FROM Payment__c
@@ -70,15 +58,15 @@ public with sharing class VGTSInstallmentPaymentHandler {
             ]) {
 
                 paidAmounts.put(
-                    (Id)result.get('installmentId'),
-                    (Decimal)result.get('totalPaid')
+                    (Id) ar.get('installmentId'),
+                    (Decimal) ar.get('totalPaid')
                 );
             }
 
             List<Installment__c> updates =
                 new List<Installment__c>();
 
-            Set<Id> depositBookingIds = new Set<Id>();
+            Set<Id> bookingIds = new Set<Id>();
 
             for (Installment__c installment : installments.values()) {
 
@@ -90,28 +78,26 @@ public with sharing class VGTSInstallmentPaymentHandler {
                     ? 0
                     : installment.Amount__c;
 
-                String newStatus;
+                String status;
 
                 if (paid <= 0) {
-                    newStatus = 'Pending';
+                    status = 'Pending';
                 } else if (paid < amount) {
-                    newStatus = 'Partially Paid';
+                    status = 'Partially Paid';
                 } else {
-                    newStatus = 'Paid';
+                    status = 'Paid';
                 }
 
                 updates.add(new Installment__c(
                     Id = installment.Id,
                     Paid_Amount__c = paid,
-                    Status__c = newStatus
+                    Status__c = status
                 ));
 
-                // Only a fully paid deposit creates the remaining schedule.
                 if (installment.Installment_Number__c == 1 &&
-                    newStatus == 'Paid' &&
                     installment.Booking__c != null) {
 
-                    depositBookingIds.add(installment.Booking__c);
+                    bookingIds.add(installment.Booking__c);
                 }
             }
 
@@ -119,47 +105,24 @@ public with sharing class VGTSInstallmentPaymentHandler {
                 update updates;
             }
 
-            // Generate installments 2 and 3 after the deposit is fully paid.
-            if (!depositBookingIds.isEmpty()) {
-                VGTSInstallmentController.createRemainingInstallments(
-                    depositBookingIds
-                );
-            }
-
-            // Update total deposit received on the Booking.
-            updateDepositTotals(installments.values(), paidAmounts);
+            updateDepositTotals(bookingIds);
 
         } finally {
             isProcessing = false;
         }
     }
 
-    // =====================================================
-    // UPDATE BOOKING DEPOSIT TOTAL
-    // =====================================================
+    private static void updateDepositTotals(Set<Id> bookingIds) {
 
-    private static void updateDepositTotals(
-        List<Installment__c> installments,
-        Map<Id, Decimal> paidAmounts
-    ) {
+        if (bookingIds == null || bookingIds.isEmpty()) return;
 
-        Set<Id> bookingIds = new Set<Id>();
+        Map<Id, Decimal> totals = new Map<Id, Decimal>();
 
-        for (Installment__c installment : installments) {
-
-            if (installment.Booking__c != null &&
-                installment.Installment_Number__c == 1) {
-
-                bookingIds.add(installment.Booking__c);
-            }
+        for (Id bookingId : bookingIds) {
+            totals.put(bookingId, 0);
         }
 
-        if (bookingIds.isEmpty()) return;
-
-        Map<Id, Decimal> depositTotals =
-            new Map<Id, Decimal>();
-
-        for (AggregateResult result : [
+        for (AggregateResult ar : [
             SELECT Booking__c bookingId,
                    SUM(Paid_Amount__c) totalPaid
             FROM Installment__c
@@ -168,28 +131,24 @@ public with sharing class VGTSInstallmentPaymentHandler {
             GROUP BY Booking__c
         ]) {
 
-            depositTotals.put(
-                (Id)result.get('bookingId'),
-                (Decimal)result.get('totalPaid')
+            totals.put(
+                (Id) ar.get('bookingId'),
+                (Decimal) ar.get('totalPaid')
             );
         }
 
-        List<Opportunity> bookingUpdates =
-            new List<Opportunity>();
+        List<Opportunity> updates = new List<Opportunity>();
 
         for (Id bookingId : bookingIds) {
 
-            bookingUpdates.add(new Opportunity(
+            updates.add(new Opportunity(
                 Id = bookingId,
-                Deposit_Received_Amount__c =
-                    depositTotals.containsKey(bookingId)
-                        ? depositTotals.get(bookingId)
-                        : 0
+                Deposit_Received_Amount__c = totals.get(bookingId)
             ));
         }
 
-        if (!bookingUpdates.isEmpty()) {
-            update bookingUpdates;
+        if (!updates.isEmpty()) {
+            update updates;
         }
     }
 }
