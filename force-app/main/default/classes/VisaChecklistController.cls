@@ -767,7 +767,7 @@ public static Map<String, Object> getVisaSummary(Id bookingId) {
 
                         problem =
                             'Quote blocked: official visa approval and valid visa grant are required for ' +
-                            destination;
+                            destination + 'Or Visa Expiry Date < Return Date' ;
 
                         break;
                     }

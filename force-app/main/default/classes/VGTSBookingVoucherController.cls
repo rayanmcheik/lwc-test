@@ -14,6 +14,9 @@ public with sharing class VGTSBookingVoucherController {
     public class Voucher {
 
         public Id lineId { get; set; }
+        public Id productId { get; set; }
+
+
         public String serviceName { get; set; }
         public String productCode { get; set; }
         public String category { get; set; }
@@ -40,6 +43,7 @@ public with sharing class VGTSBookingVoucherController {
         public String qrUrl { get; set; }
 
         public String voucherReference { get; set; }
+         
     }
 
     // =====================================================
@@ -68,6 +72,8 @@ public with sharing class VGTSBookingVoucherController {
     public String errorMessage { get; private set; }
     public String qrErrorMessage { get; private set; }
 
+   
+
     // =====================================================
     // CONSTRUCTOR
     // =====================================================
@@ -93,11 +99,16 @@ public with sharing class VGTSBookingVoucherController {
 
         loadBookedProducts(bookingId);
 
-        if (!hasProducts) {
-            errorMessage =
-                'No saved Travel Package products were found.';
+       if (!hasProducts) {
+
+            if (String.isBlank(errorMessage)) {
+                errorMessage =
+                    'No products were found in the synchronized Quote.';
+            }
+
             return;
         }
+
 
         calculatePayment(bookingId);
 
@@ -168,115 +179,150 @@ public with sharing class VGTSBookingVoucherController {
     // LOAD SAVED TRAVEL PACKAGE
     // =====================================================
 
-    private void loadBookedProducts(Id bookingId) {
+ 
+private void loadBookedProducts(Id bookingId) {
 
-        List<OpportunityLineItem> lines = [
-            SELECT Id,
-                   Quantity,
-                   UnitPrice,
-                   TotalPrice,
-                   Description,
-                   Booking_Service__c,
-                   Hotel_Rooms__c,
-                   Hotel_Nights__c,
+    // Find the synchronized Quote belonging to this Booking.
+    List<Quote> syncedQuotes = [
+        SELECT Id, Name, CurrencyIsoCode
+        FROM Quote
+        WHERE OpportunityId = :bookingId
+        AND IsSyncing = true
+        ORDER BY LastModifiedDate DESC
+        LIMIT 1
+    ];
 
-                   PricebookEntry.Product2Id,
-                   PricebookEntry.Product2.Name,
-                   PricebookEntry.Product2.ProductCode,
-                   PricebookEntry.Product2.Description,
-                   PricebookEntry.Product2.Package_Type__c,
-                   PricebookEntry.Product2.Destination__c,
-                   PricebookEntry.Product2.Departure__c,
-                   PricebookEntry.Product2.Arrival_Airport__c,
-                   PricebookEntry.Product2.Departure_Date__c,
-                   PricebookEntry.Product2.Return_Date__c,
-                   PricebookEntry.Product2.Supplier__c,
-                   PricebookEntry.Product2.Flight_Type__c,
-                   PricebookEntry.Product2.Cabin_Class__c
+    if (syncedQuotes.isEmpty()) {
+        errorMessage =
+            'No synchronized Quote was found for this Booking.';
+        return;
+    }
 
-            FROM OpportunityLineItem
+    Id quoteId = syncedQuotes[0].Id;
 
-            WHERE OpportunityId = :bookingId
-            AND Booking_Service__c = true
+    // Retrieve selected products from the Quote.
+    // Product information comes directly from Product2.
+    List<QuoteLineItem> lines = [
+        SELECT Id,
+               Quantity,
+               UnitPrice,
+               TotalPrice,
+               Description,
 
-            ORDER BY CreatedDate ASC
-        ];
+               PricebookEntry.Product2Id,
+               PricebookEntry.Product2.Name,
+               PricebookEntry.Product2.ProductCode,
+               PricebookEntry.Product2.Description,
+               PricebookEntry.Product2.Package_Type__c,
+               PricebookEntry.Product2.Destination__c,
+               PricebookEntry.Product2.Departure__c,
+               PricebookEntry.Product2.Arrival_Airport__c,
+               PricebookEntry.Product2.Departure_Date__c,
+               PricebookEntry.Product2.Return_Date__c,
+               PricebookEntry.Product2.Supplier__c,
+               PricebookEntry.Product2.Flight_Type__c,
+               PricebookEntry.Product2.Cabin_Class__c
 
-        for (OpportunityLineItem line : lines) {
+        FROM QuoteLineItem
 
-            Product2 product = line.PricebookEntry.Product2;
+        WHERE QuoteId = :quoteId
 
-            Voucher voucher = new Voucher();
+        ORDER BY CreatedDate ASC
+    ];
 
-            voucher.lineId = line.Id;
+    for (QuoteLineItem line : lines) {
 
-            voucher.serviceName = product.Name;
-            voucher.productCode = product.ProductCode;
-
-            voucher.category =
-                normalizePackageType(product.Package_Type__c);
-
-            voucher.destination = product.Destination__c;
-            voucher.supplier = product.Supplier__c;
-
-            voucher.description =
-                String.isNotBlank(line.Description)
-                    ? line.Description
-                    : product.Description;
-
-            voucher.departure = product.Departure__c;
-            voucher.arrivalAirport = product.Arrival_Airport__c;
-
-            voucher.departureDate = product.Departure_Date__c;
-            voucher.returnDate = product.Return_Date__c;
-
-            voucher.quantity = line.Quantity;
-            voucher.unitPrice = line.UnitPrice;
-            voucher.totalPrice = line.TotalPrice;
-
-            voucher.rooms = line.Hotel_Rooms__c == null
-                ? 1
-                : line.Hotel_Rooms__c.intValue();
-
-            voucher.nights = line.Hotel_Nights__c == null
-                ? 1
-                : line.Hotel_Nights__c.intValue();
-
-            voucher.flightType = product.Flight_Type__c;
-            voucher.cabinClass = product.Cabin_Class__c;
-
-            voucher.voucherReference =
-                'VGTS-' + String.valueOf(line.Id);
-
-            voucher.qrUrl = null;
-
-            if (voucher.category == 'Hotels') {
-
-                hotelVouchers.add(voucher);
-
-            } else if (voucher.category == 'Ground') {
-
-                transferVouchers.add(voucher);
-
-            } else if (voucher.category == 'Air_Tickets') {
-
-                airTicketVouchers.add(voucher);
-
-            } else {
-
-                ancillaryVouchers.add(voucher);
-            }
-
-            packageTotal += line.TotalPrice;
+        if (line.PricebookEntry == null ||
+            line.PricebookEntry.Product2 == null) {
+            continue;
         }
 
-        hasProducts = packageTotal > 0;
+        Product2 product = line.PricebookEntry.Product2;
 
-        hasHotels = !hotelVouchers.isEmpty();
-        hasTransfers = !transferVouchers.isEmpty();
-        hasAirTickets = !airTicketVouchers.isEmpty();
-        hasAncillaries = !ancillaryVouchers.isEmpty();
+        Voucher voucher = new Voucher();
+
+        // Quote line identification
+        voucher.lineId = line.Id;
+
+        // Actual Product2 identification
+        voucher.productId =
+            line.PricebookEntry.Product2Id;
+
+        // Product information
+        voucher.serviceName = product.Name;
+        voucher.productCode = product.ProductCode;
+
+        voucher.category =
+            normalizePackageType(product.Package_Type__c);
+
+        voucher.destination = product.Destination__c;
+        voucher.supplier = product.Supplier__c;
+
+        voucher.description =
+            String.isNotBlank(line.Description)
+                ? line.Description
+                : product.Description;
+
+        // Travel information
+        voucher.departure = product.Departure__c;
+        voucher.arrivalAirport = product.Arrival_Airport__c;
+
+        voucher.departureDate = product.Departure_Date__c;
+        voucher.returnDate = product.Return_Date__c;
+
+        voucher.flightType = product.Flight_Type__c;
+        voucher.cabinClass = product.Cabin_Class__c;
+
+        // Commercial information from QuoteLineItem
+        voucher.quantity = line.Quantity;
+        voucher.unitPrice = line.UnitPrice;
+        voucher.totalPrice = line.TotalPrice;
+
+        // Default values.
+        // See note below about preserving hotel room information.
+        voucher.rooms = 1;
+        voucher.nights = 1;
+
+        // Unique voucher reference
+        voucher.voucherReference =
+            'VGTS-' + String.valueOf(line.Id);
+
+        voucher.qrUrl = null;
+
+        // Categorize products
+        if (voucher.category == 'Hotels') {
+
+            hotelVouchers.add(voucher);
+
+        } else if (voucher.category == 'Ground') {
+
+            transferVouchers.add(voucher);
+
+        } else if (voucher.category == 'Air_Tickets') {
+
+            airTicketVouchers.add(voucher);
+
+        } else {
+
+            ancillaryVouchers.add(voucher);
+        }
+
+        packageTotal += line.TotalPrice;
     }
+
+    hasProducts =
+        !hotelVouchers.isEmpty() ||
+        !transferVouchers.isEmpty() ||
+        !airTicketVouchers.isEmpty() ||
+        !ancillaryVouchers.isEmpty();
+
+    hasHotels = !hotelVouchers.isEmpty();
+    hasTransfers = !transferVouchers.isEmpty();
+    hasAirTickets = !airTicketVouchers.isEmpty();
+    hasAncillaries = !ancillaryVouchers.isEmpty();
+}
+
+
 
     // =====================================================
     // PAYMENT VERIFICATION

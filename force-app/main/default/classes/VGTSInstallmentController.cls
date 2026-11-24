@@ -80,7 +80,7 @@ public static void processAcceptedQuotes(
     ]) {
 
         if (booking.StageName == 'Cancelled' ||
-            booking.StageName == 'Completed') {
+            booking.StageName == 'Confirmed') {
             continue;
         }
 
@@ -351,6 +351,7 @@ public static void processAcceptedQuotes(
     
 
 
+
 @AuraEnabled
 public static String createInstallmentSchedule(
     Id bookingId,
@@ -363,8 +364,7 @@ public static String createInstallmentSchedule(
     }
 
     Opportunity booking = [
-        SELECT Id, Departure_Date__c, StageName,
-               Installment_Scheduled_Created__c
+        SELECT Id, Departure_Date__c, StageName
         FROM Opportunity
         WHERE Id = :bookingId
         FOR UPDATE
@@ -389,15 +389,10 @@ public static String createInstallmentSchedule(
     ];
 
     if (parentPayment.Installment__c != null ||
-        parentPayment.Payment_Structure__c != 'Installments') {
+        parentPayment.Payment_Structure__c != 'Installments' ||
+        parentPayment.Status__c != 'Pending') {
         throw new AuraHandledException(
-            'A valid parent Installment Payment is required.'
-        );
-    }
-
-    if (parentPayment.Status__c != 'Pending') {
-        throw new AuraHandledException(
-            'Parent Payment must remain Pending.'
+            'A valid Pending parent Installment Payment is required.'
         );
     }
 
@@ -407,16 +402,17 @@ public static String createInstallmentSchedule(
         );
     }
 
-    if (Date.today().daysBetween(booking.Departure_Date__c) <= 45) {
+    if (Date.today().daysBetween(
+        booking.Departure_Date__c
+    ) <= 45) {
         throw new AuraHandledException(
             'Installments require departure more than 45 days away.'
         );
     }
 
-    Map<Id, Decimal> totals =
-        calculatePackageTotals(new Set<Id>{bookingId});
-
-    Decimal total = totals.get(bookingId);
+    Decimal total = calculatePackageTotals(
+        new Set<Id>{bookingId}
+    ).get(bookingId);
 
     if (total == null || total <= 0) {
         throw new AuraHandledException(
@@ -443,14 +439,16 @@ public static String createInstallmentSchedule(
         new Map<Integer, Installment__c>();
 
     for (Installment__c existing : [
-        SELECT Id, Booking__c, Payment__c,
-               Installment_Number__c,
-               Amount__c, Paid_Amount__c,
-               Status__c, Schedule_Key__c
+        SELECT Id, Booking__c, Parent_Payment__c,
+               Installment_Number__c
         FROM Installment__c
         WHERE Schedule_Key__c IN :keys
         FOR UPDATE
     ]) {
+        if (existing.Installment_Number__c == null) {
+            continue;
+        }
+
         Integer installmentNo =
             existing.Installment_Number__c.intValue();
 
@@ -459,15 +457,18 @@ public static String createInstallmentSchedule(
 
     Decimal deposit = percentageAmount(total, 25);
     Decimal second = percentageAmount(total, 35);
+
     Decimal finalAmount = (
         total - deposit - second
     ).setScale(2, RoundingMode.HALF_UP);
 
-    List<Decimal> amounts =
-        new List<Decimal>{deposit, second, finalAmount};
+    List<Decimal> amounts = new List<Decimal>{
+        deposit, second, finalAmount
+    };
 
-    List<Decimal> percentages =
-        new List<Decimal>{25, 35, 40};
+    List<Decimal> percentages = new List<Decimal>{
+        25, 35, 40
+    };
 
     List<String> types = new List<String>{
         'Deposit',
@@ -491,7 +492,8 @@ public static String createInstallmentSchedule(
 
     for (Integer i = 1; i <= 3; i++) {
 
-        Installment__c existing = existingByNumber.get(i);
+        Installment__c existing =
+            existingByNumber.get(i);
 
         if (existing != null) {
 
@@ -501,15 +503,15 @@ public static String createInstallmentSchedule(
                 );
             }
 
-            if (existing.Payment__c != null &&
-                existing.Payment__c != paymentId) {
+            if (existing.Parent_Payment__c != null &&
+                existing.Parent_Payment__c != paymentId) {
                 throw new AuraHandledException(
-                    'Existing installment is linked to another Payment.'
+                    'Existing installment belongs to another parent Payment.'
                 );
             }
 
-            if (existing.Payment__c == null) {
-                existing.Payment__c = paymentId;
+            if (existing.Parent_Payment__c == null) {
+                existing.Parent_Payment__c = paymentId;
                 toUpdate.add(existing);
             }
 
@@ -518,7 +520,11 @@ public static String createInstallmentSchedule(
             Installment__c item = new Installment__c();
 
             item.Booking__c = bookingId;
-            item.Payment__c = paymentId;
+
+            // IMPORTANT: Use the custom parent Payment lookup.
+            item.Parent_Payment__c = paymentId;
+
+            // Do not assign item.Payment__c.
             item.Schedule_Key__c = scheduleKey(bookingId, i);
             item.Installment_Number__c = i;
             item.Installment_Type__c = types[i - 1];
@@ -532,18 +538,30 @@ public static String createInstallmentSchedule(
         }
     }
 
-    if (!toUpdate.isEmpty()) {
-        update toUpdate;
+    try {
+
+        if (!toUpdate.isEmpty()) {
+            update toUpdate;
+        }
+
+        if (!toInsert.isEmpty()) {
+            insert toInsert;
+        }
+
+        return 'Three installments created successfully: 25%, 35%, and 40%.';
+
+    } catch (DmlException e) {
+
+        String errorMessage = '';
+
+        for (Integer i = 0; i < e.getNumDml(); i++) {
+            errorMessage += e.getDmlMessage(i) + ' ';
+        }
+
+        throw new AuraHandledException(
+            'Installment DML failed: ' + errorMessage
+        );
     }
-
-    if (!toInsert.isEmpty()) {
-        insert toInsert;
-    }
-
-    booking.Installment_Scheduled_Created__c = true;
-    update booking;
-
-    return 'Three installments created successfully: 25%, 35%, and 40%.';
 }
 
 

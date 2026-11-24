@@ -350,6 +350,7 @@ public static Integer saveBookingServices(
     }
 
     if (booking.StageName == 'Completed' ||
+        booking.StageName == 'Confirmed' ||
         booking.StageName == 'Cancelled') {
 
         throw new AuraHandledException(
@@ -1108,10 +1109,10 @@ public static Id createBookingQuote(
 
     List<Installment__c> installments = [
         SELECT Id, Installment_Number__c,
-               Amount__c, Payment__c
+               Amount__c, Parent_Payment__c
         FROM Installment__c
         WHERE Booking__c = :bookingId
-        AND Payment__c = :paymentId
+        AND Parent_Payment__c = :paymentId
     ];
 
     if (parentPayment.Payment_Structure__c == 'Single') {
@@ -1221,10 +1222,10 @@ public class PaymentWorkflowDTO {
 
 
 
+
 @AuraEnabled(cacheable=true)
-public static PaymentWorkflowDTO getPaymentWorkflow(
-    Id bookingId
-) {
+public static PaymentWorkflowDTO getPaymentWorkflow(Id bookingId) {
+
     PaymentWorkflowDTO result = new PaymentWorkflowDTO();
 
     result.paymentCreated = false;
@@ -1245,6 +1246,7 @@ public static PaymentWorkflowDTO getPaymentWorkflow(
 
     result.bookingStatus = booking.StageName;
 
+    // Find the parent Payment.
     List<Payment__c> parents = [
         SELECT Id, Method__c, Status__c,
                Amount__c, Payment_Structure__c
@@ -1266,12 +1268,14 @@ public static PaymentWorkflowDTO getPaymentWorkflow(
         result.paymentStructure = parent.Payment_Structure__c;
         result.paymentCreated = true;
 
+        // Find installments through the NEW lookup.
         List<Installment__c> installments = [
             SELECT Id, Installment_Number__c,
-                   Amount__c, Paid_Amount__c, Status__c
+                   Amount__c, Paid_Amount__c,
+                   Status__c, Parent_Payment__c
             FROM Installment__c
             WHERE Booking__c = :bookingId
-            AND Payment__c = :parent.Id
+            AND Parent_Payment__c = :parent.Id
         ];
 
         Set<Integer> numbers = new Set<Integer>();
@@ -1280,9 +1284,16 @@ public static PaymentWorkflowDTO getPaymentWorkflow(
 
         for (Installment__c item : installments) {
 
-            numbers.add(item.Installment_Number__c.intValue());
+            if (item.Installment_Number__c == null) {
+                continue;
+            }
 
-            if (item.Installment_Number__c == 1) {
+            Integer installmentNo =
+                item.Installment_Number__c.intValue();
+
+            numbers.add(installmentNo);
+
+            if (installmentNo == 1) {
                 deposit = item;
             }
         }
@@ -1317,6 +1328,7 @@ public static PaymentWorkflowDTO getPaymentWorkflow(
         }
     }
 
+    // Find the Booking Quote.
     List<Quote> quotes = [
         SELECT Id, Status, IsSyncing
         FROM Quote
@@ -1335,6 +1347,8 @@ public static PaymentWorkflowDTO getPaymentWorkflow(
 
     return result;
 }
+
+
 
 
 
@@ -1366,9 +1380,9 @@ public static void confirmBooking(Id bookingId) {
         );
     }
 
-    if (booking.StageName == 'Completed') {
+    if (booking.StageName == 'Confirmed') {
         throw new AuraHandledException(
-            'This Booking is already completed.'
+            'This Booking is already confirmed.'
         );
     }
 
@@ -1398,7 +1412,7 @@ public static void confirmBooking(Id bookingId) {
         );
     }
 
-    booking.StageName = 'Completed';
+    booking.StageName = 'Confirmed';
 
     update booking;
 }
@@ -1424,9 +1438,9 @@ public static void cancelBooking(Id bookingId) {
         FOR UPDATE
     ];
 
-    if (booking.StageName == 'Completed') {
+    if (booking.StageName == 'Confirmed') {
         throw new AuraHandledException(
-            'A completed Booking cannot be cancelled through this action.'
+            'A confirmed Booking cannot be cancelled through this action.'
         );
     }
 

@@ -501,7 +501,7 @@ wiredPredefinedTravelPackages(result) {
     }
 get isBookingFinalized() {
     return this.Stage === 'Confirmed' ||
-        this.Stage === 'Completed' ||
+        
         this.Stage === 'Cancelled';
 }
 
@@ -1887,7 +1887,7 @@ async handleCreateQuote() {
 
 async handleConfirmBooking() {
 
-    if (this.isSaving || !this.quoteCreated) return;
+    if (!this.quoteCreated) return;
 
     if (this.isBookingFinalized) return;
 
